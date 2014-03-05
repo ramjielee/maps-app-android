@@ -34,7 +34,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
 import com.esri.android.mapsapp.R;
-import com.esri.android.mapsapp.map.MapsApp;
+import com.esri.android.mapsapp.map.MapsAppActivity;
 
 public class DirectionsActivity extends Activity {
 
@@ -65,7 +65,7 @@ public class DirectionsActivity extends Activity {
     String startPoint = startText.getText().toString();
     String endPoint = endText.getText().toString();
     // send to BasemapsActivity for routing
-    Intent intent = new Intent(DirectionsActivity.this, MapsApp.class);
+    Intent intent = new Intent(DirectionsActivity.this, MapsAppActivity.class);
     intent.putExtra("start", startPoint);
     intent.putExtra("end", endPoint);
     intent.putExtra("basemap", basemap);

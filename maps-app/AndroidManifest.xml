@@ -22,7 +22,7 @@
         android:label="@string/app_name"
         android:uiOptions="splitActionBarWhenNarrow" >
         <activity
-            android:name="com.esri.android.mapsapp.map.MapsApp"
+            android:name="com.esri.android.mapsapp.map.MapsAppActivity"
             android:configChanges="orientation|screenSize"
             android:label="@string/app_name" >
             <intent-filter>

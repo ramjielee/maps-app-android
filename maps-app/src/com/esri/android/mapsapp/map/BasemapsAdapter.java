@@ -69,9 +69,6 @@ public class BasemapsAdapter extends BaseAdapter {
 
   String basemapID;
 
-  /**
-   * @param mContext
-   */
   public BasemapsAdapter(Context c) {
     mContext = c;
   }
@@ -103,87 +100,93 @@ public class BasemapsAdapter extends BaseAdapter {
     return position;
   }
 
-  /**
-   * @param convertView The old view to overwrite if one is passed
-   * @returns an ImageView that contains Basemaps and title descriptions
-   */
   @Override
   public View getView(final int position, View convertView, ViewGroup parent) {
+
+    // Inflate view unless we have an old one to reuse
+    View newView = convertView;
     if (convertView == null) {
       LayoutInflater inflator = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-      convertView = inflator.inflate(R.layout.basemap_image, null);
+      newView = inflator.inflate(R.layout.basemap_image, null);
     }
 
-    ImageView image = (ImageView) convertView.findViewById(R.id.listImageView);
+    // Create view for the thumbnail
+    ImageView image = (ImageView) newView.findViewById(R.id.listImageView);
     image.setImageBitmap(items.get((position)).itemThumbnail);
 
+    // Register listener for clicks on the thumbnail
     image.setOnClickListener(new OnClickListener() {
 
       @Override
       public void onClick(final View view) {
+        //TODO replace this with an AsyncTask??
         new Thread(new Runnable() {
 
           @Override
           public void run() {
-            String url = "http://www.arcgis.com";
-            mPortal = new Portal(url, null);
-            basemapID = items.get(position).item.getItemId();
-
-            try {
-              // recreation webmap item id to create a @WebMap
-              String itemID = mContext.getString(R.string.rec_webmap_id);
-              // create recreation Webmap
-              recWebmap = WebMap.newInstance(itemID, mPortal);
-              // create a new WebMap of selected basemap from default
-              // portal
-              baseWebmap = WebMap.newInstance(basemapID, mPortal);
-
-            } catch (Exception e) {
-              e.printStackTrace();
-            }
-
-            view.post(new Runnable() {
-
-              @Override
-              public void run() {
-                // Get the WebMaps basemap
-                selectedBasemap = baseWebmap.getBaseMap();
-                // switch basemaps on the recreation webmap
-                updateMapView = new MapView(mContext, recWebmap, selectedBasemap, null, null);
-                // reset the content view for the updated MapView
-                MapsApp basemapsActivity = (MapsApp) mContext;
-                basemapsActivity.setMapView(updateMapView);
-
-                if (!updateMapView.isLoaded()) {
-                  // wait till map is loaded
-                  final Handler handler = new Handler();
-                  handler.postDelayed(new Runnable() {
-
-                    @Override
-                    public void run() {
-                      // honor the maps extent
-                      updateMapView.setExtent(mapExtent);
-
-                    }
-                  }, 250);
-
-                } else {
-                  // honor the maps extent
-                  updateMapView.setExtent(mapExtent);
-                }
-              }
-            });
-
+            handleClick(view, position);
           }
+
         }).start();
 
       }
     });
 
-    TextView text = (TextView) convertView.findViewById(R.id.listTextView);
+    // Set the title and return the view we've created
+    TextView text = (TextView) newView.findViewById(R.id.listTextView);
     text.setText(items.get((position)).item.getTitle());
+    return newView;
+  }
 
-    return convertView;
+  public void handleClick(View view, int position) {
+    String url = "http://www.arcgis.com";
+    mPortal = new Portal(url, null);
+    basemapID = items.get(position).item.getItemId();
+
+    try {
+      // recreation webmap item id to create a @WebMap
+      String itemID = mContext.getString(R.string.rec_webmap_id);
+      // create recreation Webmap
+      recWebmap = WebMap.newInstance(itemID, mPortal);
+      // create a new WebMap of selected basemap from default
+      // portal
+      baseWebmap = WebMap.newInstance(basemapID, mPortal);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    view.post(new Runnable() {
+
+      @Override
+      public void run() {
+        // Get the WebMaps basemap
+        selectedBasemap = baseWebmap.getBaseMap();
+        // switch basemaps on the recreation webmap
+        updateMapView = new MapView(mContext, recWebmap, selectedBasemap, null, null);
+        // reset the content view for the updated MapView
+        MapsAppActivity basemapsActivity = (MapsAppActivity) mContext;
+        basemapsActivity.setMapView(updateMapView);
+
+        if (!updateMapView.isLoaded()) {
+          // wait till map is loaded
+          final Handler handler = new Handler();
+          handler.postDelayed(new Runnable() {
+
+            @Override
+            public void run() {
+              // honor the maps extent
+              updateMapView.setExtent(mapExtent);
+
+            }
+          }, 250);
+
+        } else {
+          // honor the maps extent
+          updateMapView.setExtent(mapExtent);
+        }
+      }
+    });
 
   }
 

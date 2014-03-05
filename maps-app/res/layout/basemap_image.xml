@@ -5,20 +5,21 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:ignore="UseCompoundDrawables" >
-    
-    <ImageView android:id="@+id/listImageView"
+
+    <ImageView
+        android:id="@+id/listImageView"
         android:layout_width="200dip"
         android:layout_height="133dip"
         android:background="#FFFFFF"
-        android:padding="2dip"
-        android:contentDescription="@string/basemap_thumbnail" />
-    
-    <TextView android:id="@+id/listTextView"
+        android:contentDescription="@string/basemap_thumbnail"
+        android:padding="2dip" />
+
+    <TextView
+        android:id="@+id/listTextView"
         android:layout_width="wrap_content"
         android:layout_height="0dip"
-        android:paddingLeft="15dip"
         android:layout_weight="1"
+        android:paddingLeft="5dip"
         android:textIsSelectable="true" />
-    
 
 </LinearLayout>

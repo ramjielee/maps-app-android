@@ -31,8 +31,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -41,7 +44,6 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -99,9 +101,10 @@ import com.esri.core.tasks.na.StopGraphic;
 /**
  * Entry point into the Maps App.
  */
+public class MapsAppActivity extends Activity implements OnEditListener {
 
-public class MapsApp extends FragmentActivity implements OnEditListener {
-  // map definitions
+  private static final String TAG = "MapsAppActivity";
+
   MapView mMapView = null;
 
   // Recreation webmap URL
@@ -135,14 +138,14 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
   // create UI components
   static ProgressDialog mProgressDialog;
 
-  // Edit text box for entering search items
-  EditText searchText;
+  // EditText widget for entering search items
+  EditText mSearchEditText;
 
-  GridView gridView;
+  GridView mBasemapGridView;
 
-  BasemapsAdapter bAdapter;
+  BasemapsAdapter mBasemapsAdapter;
 
-  ArrayList<BasemapItem> itemDataList;
+  ArrayList<BasemapItem> mBasemapItemList;
 
   Portal portal;
 
@@ -171,32 +174,45 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
   // bundle to get routing parameters back to UI
   Bundle extras;
 
-  /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    // Retrieve the map and initial extent from recreation webmap
+    // Create MapView to show the recreation WebMap
     recWebMapURL = getString(R.string.rec_webmap_url);
     mMapView = new MapView(this, recWebMapURL, "", "");
 
-    // set the content view to the map
-    // setContentView(mMapView);
+    // Complete setup of MapView and set it as the content view
     setMapView(mMapView);
 
-    // setup progress dialog
+    // Setup progress dialog
     mProgressDialog = new ProgressDialog(this) {
       @Override
       public void onBackPressed() {
-        // Back key pressed - dismiss the dialog and finish the activity
+        // Back key pressed - just dismiss the dialog
         mProgressDialog.dismiss();
-        finish();
       }
     };
-    mProgressDialog.setTitle(getString(R.string.app_name));
+    mProgressDialog.setTitle(getString(R.string.app_name)); // TODO is this necessary?
 
-    // attribute app and pan across dateline
-    addAttributes();
+  }
+
+  /**
+   * Takes a MapView that has already been instantiated to show a WebMap, completes its setup by setting various
+   * listeners and attributes, and sets it as the activity's content view.
+   * 
+   * @param mapView
+   */
+  public void setMapView(MapView mapView) {
+    mMapView = mapView;
+    mMapView.setOnSingleTapListener(new SingleTapListener(mMapView));
+    // attribute ESRI logo to map
+    mMapView.setEsriLogoVisible(true);
+    // enable map to wrap around date line
+    mMapView.enableWrapAround(true);
+    mMapView.setId(R.id.map); // Used in onBackPressed()
+
+    setContentView(mMapView);
 
     // Zoom to device location and accept intent from route layout
     mMapView.setOnStatusChangedListener(new OnStatusChangedListener() {
@@ -247,7 +263,6 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
 
             @Override
             public void onProviderDisabled(String arg0) {
-
             }
 
             @Override
@@ -273,25 +288,10 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
       @Override
       public boolean onLongPress(float x, float y) {
         Point mapPoint = mMapView.toMapPoint(x, y);
-        new ReverseGeocoding(MapsApp.this, mMapView).execute(mapPoint);
+        new ReverseGeocoding(MapsAppActivity.this, mMapView).execute(mapPoint);
         return true;
       }
     });
-
-  }
-
-  public void setMapView(MapView mapView) {
-    mMapView = mapView;
-    mMapView.setOnSingleTapListener(new SingleTapListener(mMapView));
-    setContentView(mMapView);
-  }
-
-  private void addAttributes() {
-    // attribute ESRI logo to map
-    mMapView.setEsriLogoVisible(true);
-    // enable map to wrap around date line
-    mMapView.enableWrapAround(true);
-
   }
 
   private void addGraphicLayers() {
@@ -307,47 +307,48 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
-    // inflate basemaps action bar menu
+    // Inflate the menu items for use in the action bar
     getMenuInflater().inflate(R.menu.basemap_menu, menu);
-    // create action view from basemap menu
+    // Get a reference to the EditText widget for the search option
     View searchRef = menu.findItem(R.id.menu_search).getActionView();
-    // get a reference to EditText field
-    searchText = (EditText) searchRef.findViewById(R.id.searchText);
-    // return
+    mSearchEditText = (EditText) searchRef.findViewById(R.id.searchText);
     return super.onCreateOptionsMenu(menu);
   }
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-    // handle basemap item selection
+
     switch (item.getItemId()) {
       case R.id.route:
-
-        Intent directionsIntent = new Intent(MapsApp.this, DirectionsActivity.class);
+        Intent directionsIntent = new Intent(MapsAppActivity.this, DirectionsActivity.class);
         directionsIntent.putExtra("basemap", basemap);
         startActivity(directionsIntent);
-
         return true;
-      case R.id.basemaps:
-        // inflate grid layout with basemap options
-        LayoutInflater inflator = LayoutInflater.from(getApplicationContext());
-        gridView = (GridView) inflator.inflate(R.layout.grid_layout, null);
-        // array list to hold basemap items
-        itemDataList = new ArrayList<BasemapItem>();
-        // create the custom basemap adapter and send basemap items and
-        // mapview to switch basemaps
-        bAdapter = new BasemapsAdapter(MapsApp.this, itemDataList, mMapView, mMapView.getExtent());
-        // set the adapter to the gridview
-        gridView.setAdapter(bAdapter);
-        // pull up the gridview
-        setContentView(gridView);
-        // populate the gridview with available basemaps
-        new BasemapSearch().execute();
 
+      case R.id.basemaps:
+        // Inflate basemaps grid layout and setup list and adapter to back it
+        LayoutInflater inflator = LayoutInflater.from(this);
+        mBasemapGridView = (GridView) inflator.inflate(R.layout.grid_layout, null);
+        mBasemapItemList = new ArrayList<BasemapItem>();
+        mBasemapsAdapter = new BasemapsAdapter(this, mBasemapItemList, mMapView, mMapView.getExtent());
+        mBasemapGridView.setAdapter(mBasemapsAdapter);
+
+        // Search for available basemaps and populate the grid with them
+        new BasemapSearchAsyncTask().execute();
         return true;
 
       default:
         return super.onOptionsItemSelected(item);
+    }
+  }
+
+  @Override
+  public void onBackPressed() {
+    // Redisplay map view if back pressed on any other view
+    if (findViewById(R.id.map) == null) {
+      setContentView(mMapView); // FIXME doesn't work, fix once activity/fragment architecture firmed up
+    } else {
+      super.onBackPressed();
     }
   }
 
@@ -365,7 +366,7 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
     // remove any previous routes
     routeLayer.removeAll();
     // obtain address from text box
-    String address = searchText.getText().toString();
+    String address = mSearchEditText.getText().toString();
     // set parameters to support the find operation for a geocoding service
     setSearchParams(address);
   }
@@ -443,7 +444,7 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
     fl.applyEdits(null, new Graphic[] { gr }, null, new EditCallbackListener(this, fl, popup, true, "Deleting feature"));
 
     // Dismiss popup
-    this.getSupportFragmentManager().popBackStack();
+    this.getFragmentManager().popBackStack();
   }
 
   @Override
@@ -470,7 +471,7 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
     }
 
     // Dismiss popup
-    this.getSupportFragmentManager().popBackStack();
+    this.getFragmentManager().popBackStack();
   }
 
   @Override
@@ -497,10 +498,10 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
   private class GeocoderTask extends AsyncTask<LocatorFindParameters, Void, List<LocatorGeocodeResult>> {
 
     @SuppressWarnings("unused")
-    WeakReference<MapsApp> mActivity;
+    WeakReference<MapsAppActivity> mActivity;
 
-    GeocoderTask(MapsApp activity) {
-      mActivity = new WeakReference<MapsApp>(activity);
+    GeocoderTask(MapsAppActivity activity) {
+      mActivity = new WeakReference<MapsAppActivity>(activity);
     }
 
     @Override
@@ -524,7 +525,7 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
       // results
       if (result == null || result.size() == 0) {
         // update UI with notice that no results were found
-        Toast toast = Toast.makeText(MapsApp.this, "No result found.", Toast.LENGTH_LONG);
+        Toast toast = Toast.makeText(MapsAppActivity.this, "No result found.", Toast.LENGTH_LONG);
         toast.show();
       } else {
         // get first result in the list
@@ -595,7 +596,7 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
       // results
       if (result == null) {
         // update UI with notice that no results were found
-        Toast toast = Toast.makeText(MapsApp.this, "No result found.", Toast.LENGTH_LONG);
+        Toast toast = Toast.makeText(MapsAppActivity.this, "No result found.", Toast.LENGTH_LONG);
         toast.show();
       } else {
         route = result.getRoutes().get(0);
@@ -678,85 +679,120 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
     }
   }
 
-  private class BasemapSearch extends AsyncTask<Void, Void, Boolean> {
+  /**
+   * This class provides an AsyncTask that fetches info about available basemaps on a background thread and displays a
+   * grid containing these on the UI thread.
+   */
+  private class BasemapSearchAsyncTask extends AsyncTask<Void, Void, Void> {
+    private Exception mException;
+
+    public BasemapSearchAsyncTask() {
+    }
 
     @Override
     protected void onPreExecute() {
-      // set the message of the progress dialog
+      // Display progress dialog on UI thread
       mProgressDialog.setMessage(getString(R.string.fetching_basemaps));
-      // display the progress dialog on the UI thread
+      mProgressDialog.setOnDismissListener(new OnDismissListener() {
+        @Override
+        public void onDismiss(DialogInterface arg0) {
+          BasemapSearchAsyncTask.this.cancel(true);
+        }
+      });
       mProgressDialog.show();
     }
 
     @Override
-    protected Boolean doInBackground(Void... params) {
+    protected Void doInBackground(Void... params) {
+      // Fetch basemaps on background thread
+      mException = null;
       try {
         fetchBasemapsItems();
       } catch (Exception e) {
-        e.printStackTrace();
+        mException = e;
       }
-      return true;
+      return null;
     }
 
     @Override
-    protected void onPostExecute(Boolean update) {
-      // dismiss dialog
-      if (mProgressDialog.isShowing()) {
-        mProgressDialog.dismiss();
+    protected void onPostExecute(Void result) {
+      // Display results on UI thread
+      mProgressDialog.dismiss();
+      if (mException != null) {
+        Log.w(TAG, mException.toString());
+        Toast.makeText(MapsAppActivity.this, getString(R.string.basemapSearchFailed), Toast.LENGTH_LONG).show();
+        finish();
+        return;
       }
-
-      if (update == true) {
-        // update the adapter
-        bAdapter.notifyDataSetChanged();
+      if (!isCancelled()) {
+        // Success - display grid containing results
+        mBasemapsAdapter.notifyDataSetChanged();
+        setContentView(mBasemapGridView);
       }
-
     }
 
+    /**
+     * Connects to portal and fetches info about basemaps.
+     * @throws Exception
+     */
     private void fetchBasemapsItems() throws Exception {
-      // GIST > https://gist.github.com/doneill/5499642
-      // Open default portal
+      // Create a Portal object
       String url = "http://www.arcgis.com";
       portal = new Portal(url, null);
 
-      // get the information provided by portal
+      // Fetch portal info from server
       PortalInfo portalInfo = portal.fetchPortalInfo();
-      // get query to determine which basemap gallery group should be used
-      // in client
-      String basemapGalleryGroupQuery = portalInfo.getBasemapGalleryGroupQuery();
-      // create a PortalQueryParams from the basemap query
-      PortalQueryParams portalQueryParams = new PortalQueryParams(basemapGalleryGroupQuery);
-      // allow public search for basemaps
-      portalQueryParams.setCanSearchPublic(true);
-      // find groups for basemaps
-      PortalQueryResultSet<PortalGroup> results = portal.findGroups(portalQueryParams);
+      if (isCancelled()) {
+        return;
+      }
 
-      // get the basemap group
+      // Get query to determine which basemap gallery group to us and create a PortalQueryParams from it
+      String basemapGalleryGroupQuery = portalInfo.getBasemapGalleryGroupQuery();
+      PortalQueryParams portalQueryParams = new PortalQueryParams(basemapGalleryGroupQuery);
+      portalQueryParams.setCanSearchPublic(true);
+
+      // Find groups that match the query
+      PortalQueryResultSet<PortalGroup> results = portal.findGroups(portalQueryParams);
+      if (isCancelled()) {
+        return;
+      }
+
+      // Check we have found at least one basemap group
       List<PortalGroup> groupResults = results.getResults();
-      // Get the portal items
-      if (groupResults != null && groupResults.size() > 0) {
+      if (groupResults.size() <= 0) {
+        Log.i(TAG, "portal group empty");
+      } else {
+        // Create a PortalQueryParams to query for items in basemap group
         PortalQueryParams queryParams = new PortalQueryParams();
         queryParams.setCanSearchPublic(true);
         queryParams.setLimit(15);
 
+        // Set query to search for WebMaps in only the first group we found
         String groupID = groupResults.get(0).getGroupId();
         queryParams.setQuery(PortalItemType.WEBMAP, groupID, null);
         queryParams.setSortField("name").setSortOrder(PortalQuerySortOrder.ASCENDING);
 
-        // can't run on UI thread
+        // Find items that match the query
         queryResultSet = portal.findItems(queryParams);
-
-        for (PortalItem item : queryResultSet.getResults()) {
-          byte[] data = item.fetchThumbnail();
-          if (data != null) {
-            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-            BasemapItem portalItemData = new BasemapItem(item, bitmap);
-            Log.i("TAG", "Item id = " + item.getTitle());
-            itemDataList.add(portalItemData);
-          }
+        if (isCancelled()) {
+          return;
         }
 
-      } else {
-        Log.i("TAG", "portal group empty");
+        // Loop through query results
+        for (PortalItem item : queryResultSet.getResults()) {
+          // Fetch item thumbnail from server
+          byte[] data = item.fetchThumbnail();
+          if (isCancelled()) {
+            return;
+          }
+          if (data != null) {
+            // Decode thumbnail and add this item to list for display
+            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+            BasemapItem portalItemData = new BasemapItem(item, bitmap);
+            Log.i(TAG, "Item id = " + item.getTitle());
+            mBasemapItemList.add(portalItemData);
+          }
+        }
       }
     }
   }
