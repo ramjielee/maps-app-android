@@ -22,7 +22,7 @@
  *
  */
 
-package com.esri.android.rt.map;
+package com.esri.android.mapsapp.map;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -52,17 +52,18 @@ import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.Toast;
 
-import com.arcgis.android.app.map.R;
 import com.esri.android.map.GraphicsLayer;
-import com.esri.android.map.LocationService;
+import com.esri.android.map.LocationDisplayManager;
+import com.esri.android.map.LocationDisplayManager.AutoPanMode;
 import com.esri.android.map.MapView;
 import com.esri.android.map.ags.ArcGISFeatureLayer;
 import com.esri.android.map.event.OnLongPressListener;
 import com.esri.android.map.event.OnStatusChangedListener;
 import com.esri.android.map.popup.Popup;
-import com.esri.android.rt.location.DirectionsActivity;
-import com.esri.android.rt.location.ReverseGeocoding;
-import com.esri.android.rt.map.PopupFragment.OnEditListener;
+import com.esri.android.mapsapp.R;
+import com.esri.android.mapsapp.location.DirectionsActivity;
+import com.esri.android.mapsapp.location.ReverseGeocoding;
+import com.esri.android.mapsapp.map.PopupFragment.OnEditListener;
 import com.esri.core.geometry.Envelope;
 import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
@@ -97,7 +98,6 @@ import com.esri.core.tasks.na.StopGraphic;
 
 /**
  * Entry point into the Maps App.
- * 
  */
 
 public class MapsApp extends FragmentActivity implements OnEditListener {
@@ -111,13 +111,17 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
 
   // Geocoding definitions
   Locator locator;
+
   LocatorGeocodeResult geocodeResult;
+
   GeocoderTask mGeocode;
+
   // graphics layer to show geocode result
   GraphicsLayer locationLayer;
 
   // GPS Location definitions
   Point mLocation = null;
+
   // The circle area specified by search_radius and input lat/lon serves
   // searching purpose. It is also used to construct the extent which
   // map zooms to after the first GPS fix is retrieved.
@@ -125,29 +129,42 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
 
   // Spatial references used for projecting points
   final SpatialReference wm = SpatialReference.create(102100);
+
   final SpatialReference egs = SpatialReference.create(4326);
 
   // create UI components
   static ProgressDialog mProgressDialog;
+
   // Edit text box for entering search items
   EditText searchText;
 
   GridView gridView;
+
   BasemapsAdapter bAdapter;
+
   ArrayList<BasemapItem> itemDataList;
+
   Portal portal;
+
   PortalQueryResultSet<PortalItem> queryResultSet;
 
   // Strings for routing
   String startText;
+
   String endText;
+
   Point routePnt;
+
   // routing result definition
   RouteResult routeResult;
+
   // route definition
   Route route;
+
   RouteTask routeTask;
+
   String routeSummary;
+
   // graphics layer to show routes
   GraphicsLayer routeLayer;
 
@@ -169,6 +186,7 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
 
     // setup progress dialog
     mProgressDialog = new ProgressDialog(this) {
+      @Override
       public void onBackPressed() {
         // Back key pressed - dismiss the dialog and finish the activity
         mProgressDialog.dismiss();
@@ -191,9 +209,9 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
           // add search and routing layers
           addGraphicLayers();
           // start location service
-          LocationService ls = mMapView.getLocationService();
-          ls.setAutoPan(false);
-          ls.setLocationListener(new LocationListener() {
+          LocationDisplayManager locDispMgr = mMapView.getLocationDisplayManager();
+          locDispMgr.setAutoPanMode(AutoPanMode.OFF);
+          locDispMgr.setLocationListener(new LocationListener() {
 
             boolean locationChanged = false;
 
@@ -241,7 +259,7 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
 
             }
           });
-          ls.start();
+          locDispMgr.start();
 
         }
 
@@ -303,33 +321,33 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
   public boolean onOptionsItemSelected(MenuItem item) {
     // handle basemap item selection
     switch (item.getItemId()) {
-    case R.id.route:
+      case R.id.route:
 
-      Intent directionsIntent = new Intent(MapsApp.this, DirectionsActivity.class);
-      directionsIntent.putExtra("basemap", basemap);
-      startActivity(directionsIntent);
+        Intent directionsIntent = new Intent(MapsApp.this, DirectionsActivity.class);
+        directionsIntent.putExtra("basemap", basemap);
+        startActivity(directionsIntent);
 
-      return true;
-    case R.id.basemaps:
-      // inflate grid layout with basemap options
-      LayoutInflater inflator = LayoutInflater.from(getApplicationContext());
-      gridView = (GridView) inflator.inflate(R.layout.grid_layout, null);
-      // array list to hold basemap items
-      itemDataList = new ArrayList<BasemapItem>();
-      // create the custom basemap adapter and send basemap items and
-      // mapview to switch basemaps
-      bAdapter = new BasemapsAdapter(MapsApp.this, itemDataList, mMapView, mMapView.getExtent());
-      // set the adapter to the gridview
-      gridView.setAdapter(bAdapter);
-      // pull up the gridview
-      setContentView(gridView);
-      // populate the gridview with available basemaps
-      new BasemapSearch().execute();
+        return true;
+      case R.id.basemaps:
+        // inflate grid layout with basemap options
+        LayoutInflater inflator = LayoutInflater.from(getApplicationContext());
+        gridView = (GridView) inflator.inflate(R.layout.grid_layout, null);
+        // array list to hold basemap items
+        itemDataList = new ArrayList<BasemapItem>();
+        // create the custom basemap adapter and send basemap items and
+        // mapview to switch basemaps
+        bAdapter = new BasemapsAdapter(MapsApp.this, itemDataList, mMapView, mMapView.getExtent());
+        // set the adapter to the gridview
+        gridView.setAdapter(bAdapter);
+        // pull up the gridview
+        setContentView(gridView);
+        // populate the gridview with available basemaps
+        new BasemapSearch().execute();
 
-      return true;
+        return true;
 
-    default:
-      return super.onOptionsItemSelected(item);
+      default:
+        return super.onOptionsItemSelected(item);
     }
   }
 
@@ -474,8 +492,7 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
   }
 
   /*
-   * AsyncTask to geocode an address to a point location Draw resulting point
-   * location on the map with matching address
+   * AsyncTask to geocode an address to a point location Draw resulting point location on the map with matching address
    */
   private class GeocoderTask extends AsyncTask<LocatorFindParameters, Void, List<LocatorGeocodeResult>> {
 
@@ -747,9 +764,13 @@ public class MapsApp extends FragmentActivity implements OnEditListener {
   // Handle callback on committing edits to server
   private class EditCallbackListener implements CallbackListener<FeatureEditResult[][]> {
     private String operation = "Operation ";
+
     private ArcGISFeatureLayer featureLayer = null;
+
     private boolean existingFeature = true;
+
     private Popup popup = null;
+
     private Context context;
 
     public EditCallbackListener(Context context, ArcGISFeatureLayer featureLayer, Popup popup, boolean existingFeature,

@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Maps App</string>
-
+    <string name="app_name">DevSummit Maps App</string>
     <string name="basemap_thumbnail">basemap thumbnail</string>
     <!-- recreation webmap url -->
-	<string name="rec_webmap_url">http://www.arcgis.com/home/item.html?id=6929c43e567647fb85e261beee7f5774</string>
-	<!-- recreation webmap itemID -->
-	<string name="rec_webmap_id">6929c43e567647fb85e261beee7f5774</string>
+    <string name="rec_webmap_url">http://www.arcgis.com/home/item.html?id=6929c43e567647fb85e261beee7f5774</string>
+    <!-- recreation webmap itemID -->
+    <string name="rec_webmap_id">6929c43e567647fb85e261beee7f5774</string>
     <!-- geocode service -->
     <string name="geocode_url">http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer</string>
     <!-- route service -->
