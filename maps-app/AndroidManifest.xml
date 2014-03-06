@@ -31,11 +31,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name="com.esri.android.mapsapp.location.DirectionsActivity"
-            android:configChanges="orientation"
-            android:label="@string/title_activity_directions" >
-        </activity>
     </application>
 
 </manifest>

@@ -36,14 +36,15 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -63,7 +64,8 @@ import com.esri.android.map.event.OnLongPressListener;
 import com.esri.android.map.event.OnStatusChangedListener;
 import com.esri.android.map.popup.Popup;
 import com.esri.android.mapsapp.R;
-import com.esri.android.mapsapp.location.DirectionsActivity;
+import com.esri.android.mapsapp.location.DirectionsDialogFragment;
+import com.esri.android.mapsapp.location.DirectionsDialogFragment.DirectionsDialogListener;
 import com.esri.android.mapsapp.location.ReverseGeocoding;
 import com.esri.android.mapsapp.map.PopupFragment.OnEditListener;
 import com.esri.core.geometry.Envelope;
@@ -86,6 +88,8 @@ import com.esri.core.portal.PortalQueryParams;
 import com.esri.core.portal.PortalQueryParams.PortalQuerySortOrder;
 import com.esri.core.portal.PortalQueryResultSet;
 import com.esri.core.symbol.PictureMarkerSymbol;
+import com.esri.core.symbol.SimpleLineSymbol;
+import com.esri.core.symbol.SimpleLineSymbol.STYLE;
 import com.esri.core.symbol.SimpleMarkerSymbol;
 import com.esri.core.symbol.TextSymbol;
 import com.esri.core.tasks.geocode.Locator;
@@ -101,7 +105,7 @@ import com.esri.core.tasks.na.StopGraphic;
 /**
  * Entry point into the Maps App.
  */
-public class MapsAppActivity extends Activity implements OnEditListener {
+public class MapsAppActivity extends Activity implements OnEditListener, DirectionsDialogListener {
 
   private static final String TAG = "MapsAppActivity";
 
@@ -253,18 +257,7 @@ public class MapsAppActivity extends Activity implements OnEditListener {
                 double zoomWidth = Unit.convertUnits(SEARCH_RADIUS, Unit.create(LinearUnit.Code.MILE_US), mapUnit);
                 Envelope zoomExtent = new Envelope(mLocation, zoomWidth, zoomWidth);
                 mMapView.setExtent(zoomExtent);
-
-                extras = getIntent().getExtras();
-                if (extras != null) {
-                  startText = extras.getString("start");
-                  endText = extras.getString("end");
-                  basemap = extras.getInt("basemap");
-
-                  // route start and end points
-                  route(startText, endText);
-                }
               }
-
             }
 
             @Override
@@ -277,13 +270,11 @@ public class MapsAppActivity extends Activity implements OnEditListener {
 
             @Override
             public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
-
             }
           });
           locDispMgr.start();
 
         }
-
       }
     });
 
@@ -308,7 +299,6 @@ public class MapsAppActivity extends Activity implements OnEditListener {
     // Add the route graphic layer (shows the full route)
     routeLayer = new GraphicsLayer();
     mMapView.addLayer(routeLayer);
-
   }
 
   @Override
@@ -326,9 +316,11 @@ public class MapsAppActivity extends Activity implements OnEditListener {
 
     switch (item.getItemId()) {
       case R.id.route:
-        Intent directionsIntent = new Intent(MapsAppActivity.this, DirectionsActivity.class);
-        directionsIntent.putExtra("basemap", basemap);
-        startActivity(directionsIntent);
+        // Show DirectionsDialogFragment to get routing start and end points.
+        // This calls back to onGetDirections() to do the routing
+        DirectionsDialogFragment frag = new DirectionsDialogFragment();
+        frag.setDirectionsDialogListener(this);
+        frag.show(getFragmentManager(), null);
         return true;
 
       case R.id.basemaps:
@@ -406,18 +398,19 @@ public class MapsAppActivity extends Activity implements OnEditListener {
   }
 
   /**
-   * Submit start and end point for routing
+   * Called by DirectionsDialogFragment when user presses Get Directions button.
    * 
-   * @param start
-   * @param end
+   * @param startPoint String entered by user to define start point.
+   * @param endPoint String entered by user to define end point.
    */
-  public void route(String start, String end) {
+  @Override
+  public void onGetDirections(String startPoint, String endPoint) {
     // remove any previous graphics and callouts
-    locationLayer.removeAll();
+    locationLayer.removeAll(); // TODO: confirm if this makes sense
     // remove any previous routes
     routeLayer.removeAll();
     // set parameters to geocode address for points
-    setRouteParams(start, end);
+    setRouteParams(startPoint, endPoint);
   }
 
   /**
@@ -426,8 +419,6 @@ public class MapsAppActivity extends Activity implements OnEditListener {
    * @param start
    * @param end
    */
-  @SuppressWarnings("unchecked")
-  // http://mail.openjdk.java.net/pipermail/coin-dev/2009-March/000217.html
   private void setRouteParams(String start, String end) {
     // create a list of start end point params
     LocatorFindParameters routeStartParams = new LocatorFindParameters(start);
@@ -583,91 +574,75 @@ public class MapsAppActivity extends Activity implements OnEditListener {
   }
 
   private class RouteAsyncTask extends AsyncTask<List<LocatorFindParameters>, Void, RouteResult> {
+    private Exception mException;
 
     @Override
     protected void onPreExecute() {
-      // set the message of the progress dialog
+      // Display progress dialog on UI thread
       mProgressDialog.setMessage(getString(R.string.route_search));
-      // display the progress dialog on the UI thread
+      mProgressDialog.setOnDismissListener(new OnDismissListener() {
+        @Override
+        public void onDismiss(DialogInterface arg0) {
+          RouteAsyncTask.this.cancel(true);
+        }
+      });
       mProgressDialog.show();
     }
 
     @Override
-    protected void onPostExecute(RouteResult result) {
-      if (mProgressDialog.isShowing()) {
-        mProgressDialog.dismiss();
-      }
-
-      // The result of geocode task is passed as a parameter to map the
-      // results
-      if (result == null) {
-        // update UI with notice that no results were found
-        Toast toast = Toast.makeText(MapsAppActivity.this, "No result found.", Toast.LENGTH_LONG);
-        toast.show();
-      } else {
-        route = result.getRoutes().get(0);
-        PictureMarkerSymbol destinationSymbol = new PictureMarkerSymbol(mMapView.getContext(), getResources()
-            .getDrawable(R.drawable.stat_finish));
-        // graphic to mark route
-        Graphic routeGraphic = route.getRouteGraphic();
-        Graphic endGraphic = new Graphic(((Polyline) routeGraphic.getGeometry()).getPoint(((Polyline) routeGraphic
-            .getGeometry()).getPointCount() - 1), destinationSymbol);
-
-        // Get the full route summary and set it as our current label
-        routeLayer.addGraphics(new Graphic[] { routeGraphic, endGraphic });
-
-        // Zoom to the extent of the entire route with a padding
-        mMapView.setExtent(route.getEnvelope(), 100);
-
-      }
-    }
-
-    @Override
     protected RouteResult doInBackground(List<LocatorFindParameters>... params) {
+      mException = null;
 
-      // define route objects
+      // Define route objects
       List<LocatorGeocodeResult> geocodeStartResult = null;
       List<LocatorGeocodeResult> geocodeEndResult = null;
       Point startPoint = null;
       Point endPoint = null;
       RouteParameters routeParams = null;
 
-      // parse LocatorFindParameters
-      LocatorFindParameters startParam = params[0].get(0);
-      LocatorFindParameters endParam = params[0].get(1);
-      // create a new locator to geocode start/end points
+      // Create a new locator to geocode start/end points
       Locator locator = Locator.createOnlineLocator();
 
       try {
-        // if GPS then location known and can be reprojected
+        // Geocode start position, or use My Location (from GPS)
+        LocatorFindParameters startParam = params[0].get(0);
         if (startParam.getText().equals("My Location")) {
-          // startPoint = mLocation;
           startPoint = (Point) GeometryEngine.project(mLocation, wm, egs);
         } else {
-          // if not GPS than we need to geocode and get location
           geocodeStartResult = locator.find(startParam);
           startPoint = geocodeStartResult.get(0).getLocation();
-
+          if (isCancelled()) {
+            return null;
+          }
         }
-        // geocode the destination
+
+        // Geocode the destination
+        LocatorFindParameters endParam = params[0].get(1);
         geocodeEndResult = locator.find(endParam);
         endPoint = geocodeEndResult.get(0).getLocation();
       } catch (Exception e) {
-        e.printStackTrace();
+        mException = e;
+        return null;
+      }
+      if (isCancelled()) {
+        return null;
       }
 
-      // Create a new routing task pointing to an
-      // NAService
+      // Create a new routing task pointing to an NAService
       try {
         routeTask = RouteTask.createOnlineRouteTask(getString(R.string.routingservice_url), null);
         // build routing parameters
         routeParams = routeTask.retrieveDefaultRouteTaskParameters();
-      } catch (Exception e1) {
-        e1.printStackTrace();
+      } catch (Exception e) {
+        mException = e;
+        return null;
+      }
+      if (isCancelled()) {
+        return null;
       }
 
+      // Setup route parameters
       NAFeaturesAsFeature routeFAF = new NAFeaturesAsFeature();
-      // Create the stop points
       StopGraphic sgStart = new StopGraphic(startPoint);
       StopGraphic sgEnd = new StopGraphic(endPoint);
       routeFAF.setFeatures(new Graphic[] { sgStart, sgEnd });
@@ -675,14 +650,72 @@ public class MapsAppActivity extends Activity implements OnEditListener {
       routeParams.setStops(routeFAF);
       routeParams.setOutSpatialReference(mMapView.getSpatialReference());
 
+      // Solve the route
       try {
-        // Solve the route
         routeResult = routeTask.solve(routeParams);
       } catch (Exception e) {
-        e.printStackTrace();
+        mException = e;
+        return null;
+      }
+      if (isCancelled()) {
+        return null;
       }
       return routeResult;
     }
+
+    @Override
+    protected void onPostExecute(RouteResult result) {
+      // Display results on UI thread
+      mProgressDialog.dismiss();
+      if (mException != null) {
+        Log.w(TAG, mException.toString());
+        Toast.makeText(MapsAppActivity.this, getString(R.string.routingFailed), Toast.LENGTH_LONG).show();
+        return;
+      }
+      if (!isCancelled()) {
+        /*
+         * if (result == null) { // update UI with notice that no results were found Toast toast =
+         * Toast.makeText(MapsAppActivity.this, "No result found.", Toast.LENGTH_LONG); toast.show(); } else {
+         */
+
+        // Get first item in list of routes provided by server
+        route = result.getRoutes().get(0);
+
+        // Create polyline graphic of the full route
+        SimpleLineSymbol lineSymbol = new SimpleLineSymbol(Color.RED, 2, STYLE.SOLID);
+        Graphic routeGraphic = new Graphic(route.getRouteGraphic().getGeometry(), lineSymbol);
+
+        // Create point graphic to mark end of route
+        Drawable marker = getResources().getDrawable(R.drawable.stat_finish);
+        PictureMarkerSymbol destinationSymbol = new PictureMarkerSymbol(mMapView.getContext(), marker);
+        // NOTE: marker's bounds not set till marker is used to create destinationSymbol
+        float offsetY = convertPixelsToDp(MapsAppActivity.this, marker.getBounds().bottom);
+        destinationSymbol.setOffsetY(offsetY);
+        int endPointIndex = ((Polyline) routeGraphic.getGeometry()).getPointCount() - 1;
+        Graphic endGraphic = new Graphic(((Polyline) routeGraphic.getGeometry()).getPoint(endPointIndex),
+            destinationSymbol);
+
+        // route and end point graphics to route layer
+        routeLayer.addGraphics(new Graphic[] { routeGraphic, endGraphic });
+
+        // Zoom to the extent of the entire route with a padding
+        mMapView.setExtent(route.getEnvelope(), 100);
+      }
+    }
+
+  }
+
+  /**
+   * Converts device specific pixels to density independent pixels.
+   * 
+   * @param context
+   * @param px number of device specific pixels
+   * @return number of density independent pixels
+   */
+  public static float convertPixelsToDp(Context context, float px) {
+    DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+    float dp = px / (metrics.densityDpi / 160f);
+    return dp;
   }
 
   /**
@@ -738,6 +771,7 @@ public class MapsAppActivity extends Activity implements OnEditListener {
 
     /**
      * Connects to portal and fetches info about basemaps.
+     * 
      * @throws Exception
      */
     private void fetchBasemapItems() throws Exception {
