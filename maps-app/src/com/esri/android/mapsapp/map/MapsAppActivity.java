@@ -193,7 +193,6 @@ public class MapsAppActivity extends Activity implements OnEditListener {
         mProgressDialog.dismiss();
       }
     };
-    mProgressDialog.setTitle(getString(R.string.app_name)); // TODO is this necessary?
 
   }
 
@@ -204,6 +203,10 @@ public class MapsAppActivity extends Activity implements OnEditListener {
    * @param mapView
    */
   public void setMapView(MapView mapView) {
+    String mapViewState = null;
+    if (mapView == mMapView) {
+      mapViewState = mMapView.retainState();
+    }
     mMapView = mapView;
     mMapView.setOnSingleTapListener(new SingleTapListener(mMapView));
     // attribute ESRI logo to map
@@ -211,6 +214,9 @@ public class MapsAppActivity extends Activity implements OnEditListener {
     // enable map to wrap around date line
     mMapView.enableWrapAround(true);
     mMapView.setId(R.id.map); // Used in onBackPressed()
+    if (mapViewState != null) {
+      mMapView.restoreState(mapViewState);
+    }
 
     setContentView(mMapView);
 
@@ -330,7 +336,7 @@ public class MapsAppActivity extends Activity implements OnEditListener {
         LayoutInflater inflator = LayoutInflater.from(this);
         mBasemapGridView = (GridView) inflator.inflate(R.layout.grid_layout, null);
         mBasemapItemList = new ArrayList<BasemapItem>();
-        mBasemapsAdapter = new BasemapsAdapter(this, mBasemapItemList, mMapView, mMapView.getExtent());
+        mBasemapsAdapter = new BasemapsAdapter(this, mBasemapItemList, mMapView.getExtent());
         mBasemapGridView.setAdapter(mBasemapsAdapter);
 
         // Search for available basemaps and populate the grid with them
@@ -707,7 +713,7 @@ public class MapsAppActivity extends Activity implements OnEditListener {
       // Fetch basemaps on background thread
       mException = null;
       try {
-        fetchBasemapsItems();
+        fetchBasemapItems();
       } catch (Exception e) {
         mException = e;
       }
@@ -721,7 +727,6 @@ public class MapsAppActivity extends Activity implements OnEditListener {
       if (mException != null) {
         Log.w(TAG, mException.toString());
         Toast.makeText(MapsAppActivity.this, getString(R.string.basemapSearchFailed), Toast.LENGTH_LONG).show();
-        finish();
         return;
       }
       if (!isCancelled()) {
@@ -735,7 +740,7 @@ public class MapsAppActivity extends Activity implements OnEditListener {
      * Connects to portal and fetches info about basemaps.
      * @throws Exception
      */
-    private void fetchBasemapsItems() throws Exception {
+    private void fetchBasemapItems() throws Exception {
       // Create a Portal object
       String url = "http://www.arcgis.com";
       portal = new Portal(url, null);

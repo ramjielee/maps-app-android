@@ -34,6 +34,7 @@
     <string name="menu_camera">attachment</string>
     <!-- progress dialog messages -->
     <string name="fetching_basemaps">Fetching Basemaps</string>
+    <string name="fetching_selected_basemap">Fetching Selected Basemap</string>
     <string name="address_search">Searching for Address</string>
     <string name="route_search">Searching for Route</string>
     <string name="basemapSearchFailed">Basemap search failed</string>

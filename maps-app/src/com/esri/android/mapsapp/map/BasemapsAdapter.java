@@ -27,8 +27,11 @@ package com.esri.android.mapsapp.map;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.app.ProgressDialog;
 import android.content.Context;
-import android.os.Handler;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnDismissListener;
+import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -36,6 +39,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.esri.android.map.MapView;
 import com.esri.android.mapsapp.R;
@@ -47,12 +51,10 @@ import com.esri.core.portal.WebMap;
 public class BasemapsAdapter extends BaseAdapter {
 
   // need context to use it to construct view
-  private Context mContext;
+  Context mContext;
 
   // hold onto a copy of all basemap items
-  private List<BasemapItem> items;
-
-  MapView updateMapView;
+  List<BasemapItem> items;
 
   Portal mPortal;
 
@@ -64,19 +66,15 @@ public class BasemapsAdapter extends BaseAdapter {
   // base webmap service
   WebMap baseWebmap = null;
 
-  // basemap selected from baseWebmap
-  BaseMap selectedBasemap;
-
   String basemapID;
 
   public BasemapsAdapter(Context c) {
     mContext = c;
   }
 
-  public BasemapsAdapter(Context c, ArrayList<BasemapItem> portalItems, MapView aMapView, Polygon extent) {
+  public BasemapsAdapter(Context c, ArrayList<BasemapItem> portalItems, Polygon extent) {
     mContext = c;
     this.items = portalItems;
-    updateMapView = aMapView;
     mapExtent = extent;
   }
 
@@ -116,19 +114,9 @@ public class BasemapsAdapter extends BaseAdapter {
 
     // Register listener for clicks on the thumbnail
     image.setOnClickListener(new OnClickListener() {
-
       @Override
       public void onClick(final View view) {
-        //TODO replace this with an AsyncTask??
-        new Thread(new Runnable() {
-
-          @Override
-          public void run() {
-            handleClick(view, position);
-          }
-
-        }).start();
-
+        new BasemapFetchAsyncTask().execute(Integer.valueOf(position));
       }
     });
 
@@ -138,36 +126,68 @@ public class BasemapsAdapter extends BaseAdapter {
     return newView;
   }
 
-  public void handleClick(View view, int position) {
-    String url = "http://www.arcgis.com";
-    mPortal = new Portal(url, null);
-    basemapID = items.get(position).item.getItemId();
+  /**
+   * This class provides an AsyncTask that fetches the selected basemap on a background thread and ...
+   */
+  private class BasemapFetchAsyncTask extends AsyncTask<Integer, Void, BaseMap> {
+    private Exception mException;
 
-    try {
-      // recreation webmap item id to create a @WebMap
-      String itemID = mContext.getString(R.string.rec_webmap_id);
-      // create recreation Webmap
-      recWebmap = WebMap.newInstance(itemID, mPortal);
-      // create a new WebMap of selected basemap from default
-      // portal
-      baseWebmap = WebMap.newInstance(basemapID, mPortal);
+    ProgressDialog mProgressDialog;
 
-    } catch (Exception e) {
-      e.printStackTrace();
+    public BasemapFetchAsyncTask() {
+      // Create and initialise the progress dialog
+      mProgressDialog = new ProgressDialog(mContext) {
+        @Override
+        public void onBackPressed() {
+          // Back key pressed - just dismiss the dialog
+          mProgressDialog.dismiss();
+        }
+      };
+      //mProgressDialog.setTitle(mContext.getString(R.string.app_name));
+      mProgressDialog.setMessage(mContext.getString(R.string.fetching_selected_basemap));
+      mProgressDialog.setOnDismissListener(new OnDismissListener() {
+        @Override
+        public void onDismiss(DialogInterface arg0) {
+          BasemapFetchAsyncTask.this.cancel(true);
+        }
+      });
     }
 
-    view.post(new Runnable() {
+    @Override
+    protected void onPreExecute() {
+      // Display progress dialog on UI thread
+      mProgressDialog.show();
+    }
 
-      @Override
-      public void run() {
-        // Get the WebMaps basemap
-        selectedBasemap = baseWebmap.getBaseMap();
-        // switch basemaps on the recreation webmap
-        updateMapView = new MapView(mContext, recWebmap, selectedBasemap, null, null);
-        // reset the content view for the updated MapView
-        MapsAppActivity basemapsActivity = (MapsAppActivity) mContext;
-        basemapsActivity.setMapView(updateMapView);
+    @Override
+    protected BaseMap doInBackground(Integer... params) {
+      // Fetch basemap data on background thread
+      BaseMap baseMap = null;
+      mException = null;
+      try {
+        baseMap = fetchSelectedBasemap(params[0].intValue());
+      } catch (Exception e) {
+        mException = e;
+      }
+      return baseMap;
+    }
 
+    @Override
+    protected void onPostExecute(BaseMap selectedBasemap) {
+      // Display results on UI thread
+      mProgressDialog.dismiss();
+      if (mException != null) {
+        mException.printStackTrace();
+        Toast.makeText(mContext, mContext.getString(R.string.basemapSearchFailed), Toast.LENGTH_LONG).show();
+        return;
+      }
+      if (!isCancelled()) {
+        // Success - create new MapView and pass it to MapsAppActivity to display
+        MapView mapView = new MapView(mContext, recWebmap, selectedBasemap, null, null);
+        MapsAppActivity activity = (MapsAppActivity) mContext;
+        activity.setMapView(mapView);
+
+        /*
         if (!updateMapView.isLoaded()) {
           // wait till map is loaded
           final Handler handler = new Handler();
@@ -185,9 +205,27 @@ public class BasemapsAdapter extends BaseAdapter {
           // honor the maps extent
           updateMapView.setExtent(mapExtent);
         }
+        */
       }
-    });
+    }
 
+    private BaseMap fetchSelectedBasemap(int position) throws Exception {
+      BaseMap selectedBasemap = null;
+      String url = "http://www.arcgis.com";
+      mPortal = new Portal(url, null);
+      basemapID = items.get(position).item.getItemId();
+
+      // recreation webmap item id to create a WebMap
+      String itemID = mContext.getString(R.string.rec_webmap_id);
+      // create recreation Webmap
+      recWebmap = WebMap.newInstance(itemID, mPortal);
+      // create a new WebMap of selected basemap from default portal
+      baseWebmap = WebMap.newInstance(basemapID, mPortal);
+
+      // Get the WebMaps basemap
+      selectedBasemap = baseWebmap.getBaseMap();
+      return selectedBasemap;
+    }
   }
 
 }
