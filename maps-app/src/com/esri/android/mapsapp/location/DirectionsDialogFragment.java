@@ -52,8 +52,10 @@ public class DirectionsDialogFragment extends DialogFragment {
      * 
      * @param startPoint String entered by user to define start point.
      * @param endPoint String entered by user to define end point.
+     * @return true if routing task executed, false if parameters rejected. If this method rejects the parameters it
+     *         must display an explanatory Toast to the user before returning.
      */
-    public void onGetDirections(String startPoint, String endPoint);
+    public boolean onGetDirections(String startPoint, String endPoint);
   }
 
   // Mandatory empty constructor for fragment manager to recreate fragment after it's destroyed.
@@ -88,8 +90,9 @@ public class DirectionsDialogFragment extends DialogFragment {
       public void onClick(View v) {
         String startPoint = mStartText.getText().toString();
         String endPoint = mEndText.getText().toString();
-        mDirectionsDialogListener.onGetDirections(startPoint, endPoint);
-        dismiss();
+        if (mDirectionsDialogListener.onGetDirections(startPoint, endPoint)) {
+          dismiss();
+        }
       }
 
     });

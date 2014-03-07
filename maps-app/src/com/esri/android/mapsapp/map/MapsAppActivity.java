@@ -207,6 +207,11 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
     String mapViewState = null;
     if (mapView == mMapView) {
       mapViewState = mMapView.retainState();
+    } else {
+      // Need this to ensure old MapView's resources are freed up and location tracking is disabled.
+      // Maybe unnecessary after MapView implementation is fixed.
+      mMapView.getLocationDisplayManager().stop();
+      mMapView.recycle();
     }
     mMapView = mapView;
     mMapView.setOnSingleTapListener(new SingleTapListener(mMapView));
@@ -234,6 +239,7 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
           // start location service
           LocationDisplayManager locDispMgr = mMapView.getLocationDisplayManager();
           locDispMgr.setAutoPanMode(AutoPanMode.OFF);
+          locDispMgr.setAllowNetworkLocation(true); //TODO: why doesn't this seem to work?
           locDispMgr.setLocationListener(new LocationListener() {
 
             boolean locationChanged = false;
@@ -355,11 +361,19 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
   @Override
   protected void onPause() {
     super.onPause();
+
+    // Pause the MapView and stop the LocationDisplayManager to save battery
+    mMapView.pause();
+    mMapView.getLocationDisplayManager().stop();
   }
 
   @Override
   protected void onResume() {
     super.onResume();
+
+    // Start the MapView and LocationDisplayManager running again
+    mMapView.unpause();
+    mMapView.getLocationDisplayManager().start();
   }
 
   /**
@@ -415,15 +429,22 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
    * 
    * @param startPoint String entered by user to define start point.
    * @param endPoint String entered by user to define end point.
+   * @return true if routing task executed, false if parameters rejected. If this method rejects the parameters it must
+   *         display an explanatory Toast to the user before returning.
    */
   @Override
-  public void onGetDirections(String startPoint, String endPoint) {
+  public boolean onGetDirections(String startPoint, String endPoint) {
+    if (startPoint.equals(getString(R.string.my_location)) && mLocation == null) {
+      Toast.makeText(MapsAppActivity.this, getString(R.string.need_location_fix), Toast.LENGTH_LONG).show();
+      return false;
+    }
     // remove any previous graphics and callouts
     locationLayer.removeAll(); // TODO: confirm if this makes sense
     // remove any previous routes
     routeLayer.removeAll();
     // set parameters to geocode address for points
     executeRoutingTask(startPoint, endPoint);
+    return true;
   }
 
   /**
@@ -522,7 +543,8 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
       // Display results on UI thread
       mProgressDialog.dismiss();
       if (mException != null) {
-        Log.w(TAG, mException.toString());
+        Log.w(TAG, "LocatorSyncTask failed with:");
+        mException.printStackTrace();
         Toast.makeText(MapsAppActivity.this, getString(R.string.addressSearchFailed), Toast.LENGTH_LONG).show();
         return;
       }
@@ -597,7 +619,7 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
       try {
         // Geocode start position, or use My Location (from GPS)
         LocatorFindParameters startParam = params[0].get(0);
-        if (startParam.getText().equals("My Location")) {
+        if (startParam.getText().equals(getString(R.string.my_location))) {
           startPoint = (Point) GeometryEngine.project(mLocation, wm, egs);
         } else {
           geocodeStartResult = locator.find(startParam);
@@ -659,7 +681,8 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
       // Display results on UI thread
       mProgressDialog.dismiss();
       if (mException != null) {
-        Log.w(TAG, mException.toString());
+        Log.w(TAG, "RouteSyncTask failed with:");
+        mException.printStackTrace();
         Toast.makeText(MapsAppActivity.this, getString(R.string.routingFailed), Toast.LENGTH_LONG).show();
         return;
       }
@@ -749,7 +772,8 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
       // Display results on UI thread
       mProgressDialog.dismiss();
       if (mException != null) {
-        Log.w(TAG, mException.toString());
+        Log.w(TAG, "RouteSyncTask failed with:");
+        mException.printStackTrace();
         Toast.makeText(MapsAppActivity.this, getString(R.string.basemapSearchFailed), Toast.LENGTH_LONG).show();
         return;
       }
