@@ -25,7 +25,6 @@
 package com.esri.android.mapsapp.map;
 
 import java.io.File;
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -120,8 +119,6 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
   Locator locator;
 
   LocatorGeocodeResult geocodeResult;
-
-  GeocoderTask mGeocode;
 
   // graphics layer to show geocode result
   GraphicsLayer locationLayer;
@@ -304,7 +301,7 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     // Inflate the menu items for use in the action bar
-    getMenuInflater().inflate(R.menu.basemap_menu, menu);
+    getMenuInflater().inflate(R.menu.actions, menu);
     // Get a reference to the EditText widget for the search option
     View searchRef = menu.findItem(R.id.menu_search).getActionView();
     mSearchEditText = (EditText) searchRef.findViewById(R.id.searchText);
@@ -350,51 +347,67 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
     }
   }
 
-  /**
-   * Submit address for place search
-   * 
-   * @param view
-   */
-  public void locate(View view) {
-    // hide virtual keyboard
-    InputMethodManager inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-    inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
-    // remove any previous graphics and callouts
-    locationLayer.removeAll();
-    // remove any previous routes
-    routeLayer.removeAll();
-    // obtain address from text box
-    String address = mSearchEditText.getText().toString();
-    // set parameters to support the find operation for a geocoding service
-    setSearchParams(address);
+  @Override
+  protected void onDestroy() {
+    super.onDestroy();
+  }
+
+  @Override
+  protected void onPause() {
+    super.onPause();
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
   }
 
   /**
-   * Set up the search parameters to execute the Geocoder task
+   * Called from search_layout.xml when user presses Search button.
+   * 
+   * @param view
+   */
+  public void onSearchButtonClicked(View view) {
+    // Hide virtual keyboard
+    InputMethodManager inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+    inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+
+    // remove any previous graphics, callouts and routes
+    locationLayer.removeAll();
+    routeLayer.removeAll();
+
+    // Obtain address and execute locator task
+    String address = mSearchEditText.getText().toString();
+    executeLocatorTask(address);
+  }
+
+  /**
+   * Set up the search parameters and execute the Locator task.
    * 
    * @param address
    */
-  private void setSearchParams(String address) {
-    // create Locator parameters from single line address string
+  private void executeLocatorTask(String address) {
+    // Create Locator parameters from single line address string
     LocatorFindParameters findParams = new LocatorFindParameters(address);
-    // set the search extent to extent of map
-    // SpatialReference inSR = mMapView.getSpatialReference();
-    // Envelope searchExtent = mMapView.getMapBoundaryExtent();
+
     // Use the centre of the current map extent as the find location point
     findParams.setLocation(mMapView.getCenter(), mMapView.getSpatialReference());
-    // calculate distance for find operation
+
+    // Calculate distance for find operation
     Envelope mapExtent = new Envelope();
     mMapView.getExtent().queryEnvelope(mapExtent);
     // assume map is in metres, other units wont work
     // double current envelope
     double distance = (mapExtent != null && mapExtent.getWidth() > 0) ? mapExtent.getWidth() * 2 : 10000;
+
     findParams.setDistance(distance);
     findParams.setMaxLocations(2);
-    // set address spatial reference to match map
+
+    // Set address spatial reference to match map
     findParams.setOutSR(mMapView.getSpatialReference());
-    // execute async task to geocode address
-    mGeocode = new GeocoderTask(this);
-    mGeocode.execute(findParams);
+
+    // Execute async task to find the address
+    new LocatorAsyncTask().execute(findParams);
   }
 
   /**
@@ -410,7 +423,7 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
     // remove any previous routes
     routeLayer.removeAll();
     // set parameters to geocode address for points
-    setRouteParams(startPoint, endPoint);
+    executeRoutingTask(startPoint, endPoint);
   }
 
   /**
@@ -419,7 +432,7 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
    * @param start
    * @param end
    */
-  private void setRouteParams(String start, String end) {
+  private void executeRoutingTask(String start, String end) {
     // create a list of start end point params
     LocatorFindParameters routeStartParams = new LocatorFindParameters(start);
     LocatorFindParameters routeEndParams = new LocatorFindParameters(end);
@@ -471,108 +484,85 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
     this.getFragmentManager().popBackStack();
   }
 
-  @Override
-  protected void onDestroy() {
-    super.onDestroy();
-    if (mGeocode != null) {
-      mGeocode.mActivity = null;
-    }
-  }
-
-  @Override
-  protected void onPause() {
-    super.onPause();
-  }
-
-  @Override
-  protected void onResume() {
-    super.onResume();
-  }
-
   /*
-   * AsyncTask to geocode an address to a point location Draw resulting point location on the map with matching address
+   * This class provides an AsyncTask that performs a geolocation request on a background thread and displays the 
+   * first result on the map on the UI thread.
    */
-  private class GeocoderTask extends AsyncTask<LocatorFindParameters, Void, List<LocatorGeocodeResult>> {
+  private class LocatorAsyncTask extends AsyncTask<LocatorFindParameters, Void, List<LocatorGeocodeResult>> {
+    private Exception mException;
 
-    @SuppressWarnings("unused")
-    WeakReference<MapsAppActivity> mActivity;
-
-    GeocoderTask(MapsAppActivity activity) {
-      mActivity = new WeakReference<MapsAppActivity>(activity);
+    public LocatorAsyncTask() {
     }
 
     @Override
     protected void onPreExecute() {
-      // set the message of the progress dialog
+      // Display progress dialog on UI thread
       mProgressDialog.setMessage(getString(R.string.address_search));
-      // display the progress dialog on the UI thread
       mProgressDialog.show();
-    }
-
-    // The result of geocode task is passed as a parameter to map the
-    // results
-    @Override
-    protected void onPostExecute(List<LocatorGeocodeResult> result) {
-
-      if (mProgressDialog.isShowing()) {
-        mProgressDialog.dismiss();
-      }
-
-      // The result of geocode task is passed as a parameter to map the
-      // results
-      if (result == null || result.size() == 0) {
-        // update UI with notice that no results were found
-        Toast toast = Toast.makeText(MapsAppActivity.this, "No result found.", Toast.LENGTH_LONG);
-        toast.show();
-      } else {
-        // get first result in the list
-        // update global result
-        geocodeResult = result.get(0);
-
-        // get return geometry from geocode result
-        Geometry resultLocGeom = geocodeResult.getLocation();
-        // create marker symbol to represent location
-        SimpleMarkerSymbol resultSymbol = new SimpleMarkerSymbol(Color.BLACK, 20, SimpleMarkerSymbol.STYLE.SQUARE);
-        // create graphic object for resulting location
-        Graphic resultLocation = new Graphic(resultLocGeom, resultSymbol);
-        // add graphic to location layer
-        locationLayer.addGraphic(resultLocation);
-        // create text symbol for return address
-        TextSymbol resultAddress = new TextSymbol(12, geocodeResult.getAddress(), Color.BLACK);
-        // create offset for text
-        resultAddress.setOffsetX(10);
-        resultAddress.setOffsetY(50);
-        // create a graphic object for address text
-        Graphic resultText = new Graphic(resultLocGeom, resultAddress);
-        // add address text graphic to location graphics layer
-        locationLayer.addGraphic(resultText);
-        // zoom to geocode result
-
-        mMapView.zoomToResolution(geocodeResult.getLocation(), 2);
-      }
     }
 
     @Override
     protected List<LocatorGeocodeResult> doInBackground(LocatorFindParameters... params) {
-      // create results object and set to null
+      // Perform routing request on background thread
+      mException = null;
       List<LocatorGeocodeResult> results = null;
-      // set the geocode service
+
+      // Create locator using default online geocoding service and tell it to find the given address
       locator = Locator.createOnlineLocator();
-
       try {
-
-        // pass address to find method to return point representing
-        // address
         results = locator.find(params[0]);
       } catch (Exception e) {
-        e.printStackTrace();
+        mException = e;
       }
-      // return the resulting point(s)
       return results;
+    }
+
+    @Override
+    protected void onPostExecute(List<LocatorGeocodeResult> result) {
+      // Display results on UI thread
+      mProgressDialog.dismiss();
+      if (mException != null) {
+        Log.w(TAG, mException.toString());
+        Toast.makeText(MapsAppActivity.this, getString(R.string.addressSearchFailed), Toast.LENGTH_LONG).show();
+        return;
+      }
+
+      if (result.size() == 0) {
+        Toast.makeText(MapsAppActivity.this, getString(R.string.noResultsFound), Toast.LENGTH_LONG).show();
+      } else {
+        // Use first result in the list
+        geocodeResult = result.get(0);
+
+        // get return geometry from geocode result
+        Geometry resultLocGeom = geocodeResult.getLocation();
+        // create marker symbol to represent location TODO: need offset?
+        SimpleMarkerSymbol resultSymbol = new SimpleMarkerSymbol(Color.RED, 16, SimpleMarkerSymbol.STYLE.CROSS);
+        // create graphic object for resulting location
+        Graphic resultLocGraphic = new Graphic(resultLocGeom, resultSymbol);
+        // add graphic to location layer
+        locationLayer.addGraphic(resultLocGraphic);
+        // create text symbol for return address
+        String address = geocodeResult.getAddress();
+        TextSymbol resultAddress = new TextSymbol(20, address, Color.BLACK);
+        // create offset for text
+        resultAddress.setOffsetX(-4 * address.length()); // TODO: improve this rough calculation?
+        resultAddress.setOffsetY(10);
+        // create a graphic object for address text
+        Graphic resultText = new Graphic(resultLocGeom, resultAddress);
+        // add address text graphic to location graphics layer
+        locationLayer.addGraphic(resultText);
+
+        // Zoom map to geocode result location
+        mMapView.zoomToResolution(geocodeResult.getLocation(), 2);
+      }
     }
 
   }
 
+  /**
+   * This class provides an AsyncTask that performs a routing request on a background thread and displays the resultant
+   * route on the map on the UI thread.
+   */
   private class RouteAsyncTask extends AsyncTask<List<LocatorFindParameters>, Void, RouteResult> {
     private Exception mException;
 
@@ -591,6 +581,7 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
 
     @Override
     protected RouteResult doInBackground(List<LocatorFindParameters>... params) {
+      // Perform routing request on background thread
       mException = null;
 
       // Define route objects

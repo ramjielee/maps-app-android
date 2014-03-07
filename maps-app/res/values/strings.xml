@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">DevSummit Maps App</string>
+    <string name="app_name">DevMapsApp</string>
     <string name="basemap_thumbnail">basemap thumbnail</string>
     <!-- recreation webmap url -->
     <string name="rec_webmap_url">http://www.arcgis.com/home/item.html?id=6929c43e567647fb85e261beee7f5774</string>
@@ -39,5 +39,7 @@
     <string name="route_search">Searching for Route</string>
     <string name="basemapSearchFailed">Basemap search failed</string>
     <string name="routingFailed">Routing task failed</string>
+    <string name="addressSearchFailed">Address search failed</string>
+    <string name="noResultsFound">No results found</string>
     
 </resources>

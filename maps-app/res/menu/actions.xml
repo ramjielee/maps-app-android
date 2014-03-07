@@ -9,14 +9,13 @@
         android:title="@string/menu_search"/>
     <item
         android:id="@+id/route"
-        android:actionLayout="@layout/directions_layout"
         android:icon="@drawable/action_route"
-        android:showAsAction="ifRoom|collapseActionView"
+        android:showAsAction="ifRoom"
         android:title="@string/menu_route"/>
     <item
         android:id="@+id/basemaps"
         android:icon="@drawable/action_basemaps"
-        android:showAsAction="ifRoom|collapseActionView"
+        android:showAsAction="ifRoom"
         android:title="@string/menu_basemaps"/>
     <item
         android:id="@+id/action_settings"
