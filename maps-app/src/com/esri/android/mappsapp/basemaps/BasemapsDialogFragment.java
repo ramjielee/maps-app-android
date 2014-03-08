@@ -18,10 +18,8 @@ import android.view.ViewGroup;
 import android.widget.GridView;
 import android.widget.Toast;
 
-import com.esri.android.map.MapView;
 import com.esri.android.mappsapp.basemaps.BasemapsAdapter.BasemapsAdapterClickListener;
 import com.esri.android.mapsapp.R;
-import com.esri.core.portal.BaseMap;
 import com.esri.core.portal.Portal;
 import com.esri.core.portal.PortalGroup;
 import com.esri.core.portal.PortalInfo;
@@ -44,9 +42,9 @@ public class BasemapsDialogFragment extends DialogFragment implements BasemapsAd
     /**
      * Callback for when a new basemap is selected.
      * 
-     * @param mapView MapView object containing the new basemap.
+     * @param webMap WebMap object containing the new basemap.
      */
-    public void onBasemapChanged(MapView mapView);
+    public void onBasemapChanged(WebMap webMap);
   }
 
   BasemapsDialogListener mBasemapsDialogListener;
@@ -54,9 +52,6 @@ public class BasemapsDialogFragment extends DialogFragment implements BasemapsAd
   BasemapsAdapter mBasemapsAdapter;
 
   ArrayList<BasemapItem> mBasemapItemList;
-
-  // Recreation WebMap, used to host the selected basemap layers
-  WebMap mRecWebmap;
 
   ProgressDialog mProgressDialog;
 
@@ -243,7 +238,7 @@ public class BasemapsDialogFragment extends DialogFragment implements BasemapsAd
   /**
    * This class provides an AsyncTask that fetches the selected basemap on a background thread and ...
    */
-  private class BasemapFetchAsyncTask extends AsyncTask<Integer, Void, BaseMap> {
+  private class BasemapFetchAsyncTask extends AsyncTask<Integer, Void, WebMap> {
     private Exception mException;
 
     public BasemapFetchAsyncTask() {
@@ -263,49 +258,35 @@ public class BasemapsDialogFragment extends DialogFragment implements BasemapsAd
     }
 
     @Override
-    protected BaseMap doInBackground(Integer... params) {
+    protected WebMap doInBackground(Integer... params) {
       // Fetch basemap data on background thread
-      BaseMap baseMap = null;
+      WebMap baseWebMap = null;
       mException = null;
       try {
-        baseMap = fetchSelectedBasemap(params[0].intValue());
+        int position = params[0].intValue();
+        Portal portal = new Portal("http://www.arcgis.com", null);
+        String basemapID = mBasemapItemList.get(position).item.getItemId();
+
+        // create a new WebMap of selected basemap from default portal
+        baseWebMap = WebMap.newInstance(basemapID, portal);
       } catch (Exception e) {
         mException = e;
       }
-      return baseMap;
+      return baseWebMap;
     }
 
     @Override
-    protected void onPostExecute(BaseMap selectedBasemap) {
+    protected void onPostExecute(WebMap baseWebMap) {
       // Display results on UI thread
       mProgressDialog.dismiss();
       if (mException != null) {
         mException.printStackTrace();
         Toast.makeText(getActivity(), getString(R.string.basemapSearchFailed), Toast.LENGTH_LONG).show();
       } else {
-        // Success - create new MapView and pass it to MapsAppActivity to display
-        MapView mapView = new MapView(getActivity(), mRecWebmap, selectedBasemap, null, null);
-        mBasemapsDialogListener.onBasemapChanged(mapView);
+        // Success - pass WebMap to MapsAppActivity to display
+        mBasemapsDialogListener.onBasemapChanged(baseWebMap);
       }
       dismiss();
-    }
-
-    private BaseMap fetchSelectedBasemap(int position) throws Exception {
-      BaseMap selectedBasemap = null;
-      String url = "http://www.arcgis.com";
-      Portal portal = new Portal(url, null);
-      String basemapID = mBasemapItemList.get(position).item.getItemId();
-
-      // recreation webmap item id to create a WebMap
-      String itemID = getString(R.string.rec_webmap_id);
-      // create recreation Webmap
-      mRecWebmap = WebMap.newInstance(itemID, portal);
-      // create a new WebMap of selected basemap from default portal
-      WebMap baseWebmap = WebMap.newInstance(basemapID, portal);
-
-      // Get the WebMaps basemap
-      selectedBasemap = baseWebmap.getBaseMap();
-      return selectedBasemap;
     }
   }
 }

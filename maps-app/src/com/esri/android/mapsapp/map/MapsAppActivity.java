@@ -68,6 +68,7 @@ import com.esri.core.geometry.Polyline;
 import com.esri.core.geometry.SpatialReference;
 import com.esri.core.geometry.Unit;
 import com.esri.core.map.Graphic;
+import com.esri.core.portal.WebMap;
 import com.esri.core.symbol.PictureMarkerSymbol;
 import com.esri.core.symbol.SimpleLineSymbol;
 import com.esri.core.symbol.SimpleLineSymbol.STYLE;
@@ -90,11 +91,14 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
 
   private static final String TAG = "MapsAppActivity";
 
+  private static final String KEY_IS_LOCATION_TRACKING = "IsLocationTracking";
+  
   MapView mMapView = null;
 
-  // Recreation webmap URL
-  String recWebMapURL;
-
+  String mMapViewState;
+  
+  boolean mIsLocationTracking;
+  
   int basemap;
 
   // Geocoding definitions
@@ -103,7 +107,7 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
   LocatorGeocodeResult geocodeResult;
 
   // graphics layer to show geocode result
-  GraphicsLayer locationLayer;
+  GraphicsLayer mLocationLayer;
 
   // GPS Location definitions
   Point mLocation = null;
@@ -142,7 +146,7 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
   String routeSummary;
 
   // graphics layer to show routes
-  GraphicsLayer routeLayer;
+  GraphicsLayer mRouteLayer;
 
   // bundle to get routing parameters back to UI
   Bundle extras;
@@ -150,10 +154,18 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    
+    if (savedInstanceState == null) {
+      mIsLocationTracking = false;
+    } else {
+      mIsLocationTracking = savedInstanceState.getBoolean(KEY_IS_LOCATION_TRACKING);
+    }
 
     // Create MapView to show the recreation WebMap
-    recWebMapURL = getString(R.string.rec_webmap_url);
-    mMapView = new MapView(this, recWebMapURL, "", "");
+    String defaultBaseMapURL = getString(R.string.topo_basemap_url);
+    mMapView = new MapView(this, defaultBaseMapURL, "", "");
+    mLocationLayer = null;
+    mRouteLayer = null;
 
     // Complete setup of MapView and set it as the content view
     setMapView(mMapView);
@@ -176,10 +188,15 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
    * @param mapView
    */
   private void setMapView(MapView mapView) {
-    String mapViewState = null;
     if (mapView == mMapView) {
-      mapViewState = mMapView.retainState();
+      mMapViewState = null;
     } else {
+      mMapViewState = mMapView.retainState();
+
+      // Remove layers so they can be added to the new MapView
+      mMapView.removeLayer(mLocationLayer);
+      mMapView.removeLayer(mRouteLayer);
+
       // Need this to ensure old MapView's resources are freed up and location tracking is disabled.
       // Maybe unnecessary after MapView implementation is fixed.
       mMapView.getLocationDisplayManager().stop();
@@ -191,9 +208,6 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
     // enable map to wrap around date line
     mMapView.enableWrapAround(true);
     mMapView.setId(R.id.map); // Used in onBackPressed()
-    if (mapViewState != null) {
-      mMapView.restoreState(mapViewState);
-    }
 
     setContentView(mMapView);
 
@@ -206,49 +220,11 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
       public void onStatusChanged(Object source, STATUS status) {
         Log.i(TAG, "MapView.setOnStatusChangedListener() status=" + status.toString());
         if (source == mMapView && status == STATUS.INITIALIZED) {
+          if (mMapViewState != null) {
+            mMapView.restoreState(mMapViewState);
+          }
           // add search and routing layers
           addGraphicLayers();
-          // start location service
-          LocationDisplayManager locDispMgr = mMapView.getLocationDisplayManager();
-          locDispMgr.setAutoPanMode(AutoPanMode.OFF);
-          locDispMgr.setAllowNetworkLocation(true); // TODO: why doesn't this seem to work?
-          locDispMgr.setLocationListener(new LocationListener() {
-
-            boolean locationChanged = false;
-
-            // Zooms to the current location when first GPS fix
-            // arrives.
-            @Override
-            public void onLocationChanged(Location loc) {
-              if (!locationChanged) {
-                locationChanged = true;
-                double locy = loc.getLatitude();
-                double locx = loc.getLongitude();
-                Point wgspoint = new Point(locx, locy);
-                mLocation = (Point) GeometryEngine.project(wgspoint, SpatialReference.create(4326),
-                    mMapView.getSpatialReference());
-
-                Unit mapUnit = mMapView.getSpatialReference().getUnit();
-                double zoomWidth = Unit.convertUnits(SEARCH_RADIUS, Unit.create(LinearUnit.Code.MILE_US), mapUnit);
-                Envelope zoomExtent = new Envelope(mLocation, zoomWidth, zoomWidth);
-                mMapView.setExtent(zoomExtent);
-              }
-            }
-
-            @Override
-            public void onProviderDisabled(String arg0) {
-            }
-
-            @Override
-            public void onProviderEnabled(String arg0) {
-            }
-
-            @Override
-            public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
-            }
-          });
-          locDispMgr.start();
-
         }
       }
     });
@@ -266,14 +242,61 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
     });
   }
 
+  private void startLocationTracking() {
+    LocationDisplayManager locDispMgr = mMapView.getLocationDisplayManager();
+    locDispMgr.setAutoPanMode(AutoPanMode.OFF);
+    locDispMgr.setAllowNetworkLocation(true); // TODO: why doesn't this seem to work?
+    locDispMgr.setLocationListener(new LocationListener() {
+
+      boolean locationChanged = false;
+
+      // Zooms to the current location when first GPS fix
+      // arrives.
+      @Override
+      public void onLocationChanged(Location loc) {
+        if (!locationChanged) {
+          locationChanged = true;
+          double locy = loc.getLatitude();
+          double locx = loc.getLongitude();
+          Point wgspoint = new Point(locx, locy);
+          mLocation = (Point) GeometryEngine.project(wgspoint, SpatialReference.create(4326),
+              mMapView.getSpatialReference());
+
+          Unit mapUnit = mMapView.getSpatialReference().getUnit();
+          double zoomWidth = Unit.convertUnits(SEARCH_RADIUS, Unit.create(LinearUnit.Code.MILE_US), mapUnit);
+          Envelope zoomExtent = new Envelope(mLocation, zoomWidth, zoomWidth);
+          mMapView.setExtent(zoomExtent);
+        }
+      }
+
+      @Override
+      public void onProviderDisabled(String arg0) {
+      }
+
+      @Override
+      public void onProviderEnabled(String arg0) {
+      }
+
+      @Override
+      public void onStatusChanged(String arg0, int arg1, Bundle arg2) {
+      }
+    });
+    locDispMgr.start();
+    mIsLocationTracking = true;
+  }
+
   private void addGraphicLayers() {
     // Add location layer
-    locationLayer = new GraphicsLayer();
-    mMapView.addLayer(locationLayer);
+    if (mLocationLayer == null) {
+      mLocationLayer = new GraphicsLayer();
+    }
+    mMapView.addLayer(mLocationLayer);
 
-    // Add the route graphic layer (shows the full route)
-    routeLayer = new GraphicsLayer();
-    mMapView.addLayer(routeLayer);
+    // Add the route graphic layer
+    if (mRouteLayer == null) {
+      mRouteLayer = new GraphicsLayer();
+    }
+    mMapView.addLayer(mRouteLayer);
   }
 
   @Override
@@ -306,6 +329,15 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
         basemapsFrag.show(getFragmentManager(), null);
         return true;
 
+      case R.id.location:
+        if (mIsLocationTracking) {
+          mMapView.getLocationDisplayManager().stop();
+          mIsLocationTracking = false;
+        } else {
+          startLocationTracking();
+        }
+        return true;
+
       default:
         return super.onOptionsItemSelected(item);
     }
@@ -331,8 +363,11 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
     super.onPause();
 
     // Pause the MapView and stop the LocationDisplayManager to save battery
+    if (mIsLocationTracking) {
+      mMapView.getLocationDisplayManager().stop();
+    }
+    mMapViewState = mMapView.retainState();
     mMapView.pause();
-    mMapView.getLocationDisplayManager().stop();
   }
 
   @Override
@@ -341,10 +376,24 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
 
     // Start the MapView and LocationDisplayManager running again
     mMapView.unpause();
-    mMapView.getLocationDisplayManager().start();
+    if (mMapViewState != null) {
+      mMapView.restoreState(mMapViewState);
+    }
+    if (mIsLocationTracking) {
+      mMapView.getLocationDisplayManager().start();
+    }
   }
 
-  public void onBasemapChanged(MapView mapView) {
+  @Override
+  protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    
+    outState.putBoolean(KEY_IS_LOCATION_TRACKING, mIsLocationTracking);
+  }
+
+  @Override
+  public void onBasemapChanged(WebMap webMap) {
+    MapView mapView = new MapView(this, webMap, null, null);
     setMapView(mapView);
   }
 
@@ -359,8 +408,8 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
     inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
 
     // remove any previous graphics, callouts and routes
-    locationLayer.removeAll();
-    routeLayer.removeAll();
+    mLocationLayer.removeAll();
+    mRouteLayer.removeAll();
 
     // Obtain address and execute locator task
     String address = mSearchEditText.getText().toString();
@@ -411,9 +460,9 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
       return false;
     }
     // remove any previous graphics and callouts
-    locationLayer.removeAll(); // TODO: confirm if this makes sense
+    mLocationLayer.removeAll(); // TODO: confirm if this makes sense
     // remove any previous routes
-    routeLayer.removeAll();
+    mRouteLayer.removeAll();
     // set parameters to geocode address for points
     executeRoutingTask(startPoint, endPoint);
     return true;
@@ -495,7 +544,7 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
         // create graphic object for resulting location
         Graphic resultLocGraphic = new Graphic(resultLocGeom, resultSymbol);
         // add graphic to location layer
-        locationLayer.addGraphic(resultLocGraphic);
+        mLocationLayer.addGraphic(resultLocGraphic);
         // create text symbol for return address
         String address = geocodeResult.getAddress();
         TextSymbol resultAddress = new TextSymbol(20, address, Color.BLACK);
@@ -505,7 +554,7 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
         // create a graphic object for address text
         Graphic resultText = new Graphic(resultLocGeom, resultAddress);
         // add address text graphic to location graphics layer
-        locationLayer.addGraphic(resultText);
+        mLocationLayer.addGraphic(resultText);
 
         // Zoom map to geocode result location
         mMapView.zoomToResolution(geocodeResult.getLocation(), 2);
@@ -638,7 +687,7 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
           destinationSymbol);
 
       // route and end point graphics to route layer
-      routeLayer.addGraphics(new Graphic[] { routeGraphic, endGraphic });
+      mRouteLayer.addGraphics(new Graphic[] { routeGraphic, endGraphic });
 
       // Zoom to the extent of the entire route with a padding
       mMapView.setExtent(route.getEnvelope(), 100);
