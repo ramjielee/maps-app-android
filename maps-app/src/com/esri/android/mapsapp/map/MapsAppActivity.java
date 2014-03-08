@@ -35,8 +35,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
@@ -45,13 +43,11 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.GridView;
 import android.widget.Toast;
 
 import com.esri.android.map.GraphicsLayer;
@@ -62,6 +58,8 @@ import com.esri.android.map.ags.ArcGISFeatureLayer;
 import com.esri.android.map.event.OnLongPressListener;
 import com.esri.android.map.event.OnStatusChangedListener;
 import com.esri.android.map.popup.Popup;
+import com.esri.android.mappsapp.basemaps.BasemapsDialogFragment;
+import com.esri.android.mappsapp.basemaps.BasemapsDialogFragment.BasemapsDialogListener;
 import com.esri.android.mapsapp.R;
 import com.esri.android.mapsapp.location.DirectionsDialogFragment;
 import com.esri.android.mapsapp.location.DirectionsDialogFragment.DirectionsDialogListener;
@@ -78,14 +76,6 @@ import com.esri.core.geometry.Unit;
 import com.esri.core.map.CallbackListener;
 import com.esri.core.map.FeatureEditResult;
 import com.esri.core.map.Graphic;
-import com.esri.core.portal.Portal;
-import com.esri.core.portal.PortalGroup;
-import com.esri.core.portal.PortalInfo;
-import com.esri.core.portal.PortalItem;
-import com.esri.core.portal.PortalItemType;
-import com.esri.core.portal.PortalQueryParams;
-import com.esri.core.portal.PortalQueryParams.PortalQuerySortOrder;
-import com.esri.core.portal.PortalQueryResultSet;
 import com.esri.core.symbol.PictureMarkerSymbol;
 import com.esri.core.symbol.SimpleLineSymbol;
 import com.esri.core.symbol.SimpleLineSymbol.STYLE;
@@ -104,7 +94,8 @@ import com.esri.core.tasks.na.StopGraphic;
 /**
  * Entry point into the Maps App.
  */
-public class MapsAppActivity extends Activity implements OnEditListener, DirectionsDialogListener {
+public class MapsAppActivity extends Activity implements OnEditListener, BasemapsDialogListener,
+    DirectionsDialogListener {
 
   private static final String TAG = "MapsAppActivity";
 
@@ -141,16 +132,6 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
 
   // EditText widget for entering search items
   EditText mSearchEditText;
-
-  GridView mBasemapGridView;
-
-  BasemapsAdapter mBasemapsAdapter;
-
-  ArrayList<BasemapItem> mBasemapItemList;
-
-  Portal portal;
-
-  PortalQueryResultSet<PortalItem> queryResultSet;
 
   // Strings for routing
   String startText;
@@ -203,7 +184,7 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
    * 
    * @param mapView
    */
-  public void setMapView(MapView mapView) {
+  private void setMapView(MapView mapView) {
     String mapViewState = null;
     if (mapView == mMapView) {
       mapViewState = mMapView.retainState();
@@ -233,13 +214,14 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
 
       @Override
       public void onStatusChanged(Object source, STATUS status) {
+        Log.i(TAG, "MapView.setOnStatusChangedListener() status=" + status.toString());
         if (source == mMapView && status == STATUS.INITIALIZED) {
           // add search and routing layers
           addGraphicLayers();
           // start location service
           LocationDisplayManager locDispMgr = mMapView.getLocationDisplayManager();
           locDispMgr.setAutoPanMode(AutoPanMode.OFF);
-          locDispMgr.setAllowNetworkLocation(true); //TODO: why doesn't this seem to work?
+          locDispMgr.setAllowNetworkLocation(true); // TODO: why doesn't this seem to work?
           locDispMgr.setLocationListener(new LocationListener() {
 
             boolean locationChanged = false;
@@ -320,22 +302,18 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
     switch (item.getItemId()) {
       case R.id.route:
         // Show DirectionsDialogFragment to get routing start and end points.
-        // This calls back to onGetDirections() to do the routing
-        DirectionsDialogFragment frag = new DirectionsDialogFragment();
-        frag.setDirectionsDialogListener(this);
-        frag.show(getFragmentManager(), null);
+        // This calls back to onGetDirections() to do the routing.
+        DirectionsDialogFragment directionsFrag = new DirectionsDialogFragment();
+        directionsFrag.setDirectionsDialogListener(this);
+        directionsFrag.show(getFragmentManager(), null);
         return true;
 
       case R.id.basemaps:
-        // Inflate basemaps grid layout and setup list and adapter to back it
-        LayoutInflater inflator = LayoutInflater.from(this);
-        mBasemapGridView = (GridView) inflator.inflate(R.layout.grid_layout, null);
-        mBasemapItemList = new ArrayList<BasemapItem>();
-        mBasemapsAdapter = new BasemapsAdapter(this, mBasemapItemList, mMapView.getExtent());
-        mBasemapGridView.setAdapter(mBasemapsAdapter);
-
-        // Search for available basemaps and populate the grid with them
-        new BasemapSearchAsyncTask().execute();
+        // Show BasemapsDialogFragment to offer a choice if basemaps.
+        // This calls back to onBasemapChanged() if one is selected.
+        BasemapsDialogFragment basemapsFrag = new BasemapsDialogFragment();
+        basemapsFrag.setBasemapsDialogListener(this);
+        basemapsFrag.show(getFragmentManager(), null);
         return true;
 
       default:
@@ -374,6 +352,10 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
     // Start the MapView and LocationDisplayManager running again
     mMapView.unpause();
     mMapView.getLocationDisplayManager().start();
+  }
+
+  public void onBasemapChanged(MapView mapView) {
+    setMapView(mapView);
   }
 
   /**
@@ -506,8 +488,8 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
   }
 
   /*
-   * This class provides an AsyncTask that performs a geolocation request on a background thread and displays the 
-   * first result on the map on the UI thread.
+   * This class provides an AsyncTask that performs a geolocation request on a background thread and displays the first
+   * result on the map on the UI thread.
    */
   private class LocatorAsyncTask extends AsyncTask<LocatorFindParameters, Void, List<LocatorGeocodeResult>> {
     private Exception mException;
@@ -730,125 +712,6 @@ public class MapsAppActivity extends Activity implements OnEditListener, Directi
     DisplayMetrics metrics = context.getResources().getDisplayMetrics();
     float dp = px / (metrics.densityDpi / 160f);
     return dp;
-  }
-
-  /**
-   * This class provides an AsyncTask that fetches info about available basemaps on a background thread and displays a
-   * grid containing these on the UI thread.
-   */
-  private class BasemapSearchAsyncTask extends AsyncTask<Void, Void, Void> {
-    private Exception mException;
-
-    public BasemapSearchAsyncTask() {
-    }
-
-    @Override
-    protected void onPreExecute() {
-      // Display progress dialog on UI thread
-      mProgressDialog.setMessage(getString(R.string.fetching_basemaps));
-      mProgressDialog.setOnDismissListener(new OnDismissListener() {
-        @Override
-        public void onDismiss(DialogInterface arg0) {
-          BasemapSearchAsyncTask.this.cancel(true);
-        }
-      });
-      mProgressDialog.show();
-    }
-
-    @Override
-    protected Void doInBackground(Void... params) {
-      // Fetch basemaps on background thread
-      mException = null;
-      try {
-        fetchBasemapItems();
-      } catch (Exception e) {
-        mException = e;
-      }
-      return null;
-    }
-
-    @Override
-    protected void onPostExecute(Void result) {
-      // Display results on UI thread
-      mProgressDialog.dismiss();
-      if (mException != null) {
-        Log.w(TAG, "RouteSyncTask failed with:");
-        mException.printStackTrace();
-        Toast.makeText(MapsAppActivity.this, getString(R.string.basemapSearchFailed), Toast.LENGTH_LONG).show();
-        return;
-      }
-      if (!isCancelled()) {
-        // Success - display grid containing results
-        mBasemapsAdapter.notifyDataSetChanged();
-        setContentView(mBasemapGridView);
-      }
-    }
-
-    /**
-     * Connects to portal and fetches info about basemaps.
-     * 
-     * @throws Exception
-     */
-    private void fetchBasemapItems() throws Exception {
-      // Create a Portal object
-      String url = "http://www.arcgis.com";
-      portal = new Portal(url, null);
-
-      // Fetch portal info from server
-      PortalInfo portalInfo = portal.fetchPortalInfo();
-      if (isCancelled()) {
-        return;
-      }
-
-      // Get query to determine which basemap gallery group to us and create a PortalQueryParams from it
-      String basemapGalleryGroupQuery = portalInfo.getBasemapGalleryGroupQuery();
-      PortalQueryParams portalQueryParams = new PortalQueryParams(basemapGalleryGroupQuery);
-      portalQueryParams.setCanSearchPublic(true);
-
-      // Find groups that match the query
-      PortalQueryResultSet<PortalGroup> results = portal.findGroups(portalQueryParams);
-      if (isCancelled()) {
-        return;
-      }
-
-      // Check we have found at least one basemap group
-      List<PortalGroup> groupResults = results.getResults();
-      if (groupResults.size() <= 0) {
-        Log.i(TAG, "portal group empty");
-      } else {
-        // Create a PortalQueryParams to query for items in basemap group
-        PortalQueryParams queryParams = new PortalQueryParams();
-        queryParams.setCanSearchPublic(true);
-        queryParams.setLimit(15);
-
-        // Set query to search for WebMaps in only the first group we found
-        String groupID = groupResults.get(0).getGroupId();
-        queryParams.setQuery(PortalItemType.WEBMAP, groupID, null);
-        queryParams.setSortField("name").setSortOrder(PortalQuerySortOrder.ASCENDING);
-
-        // Find items that match the query
-        queryResultSet = portal.findItems(queryParams);
-        if (isCancelled()) {
-          return;
-        }
-
-        // Loop through query results
-        for (PortalItem item : queryResultSet.getResults()) {
-          // Fetch item thumbnail from server
-          byte[] data = item.fetchThumbnail();
-          if (isCancelled()) {
-            return;
-          }
-          if (data != null) {
-            // Decode thumbnail and add this item to list for display
-            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-            BasemapItem portalItemData = new BasemapItem(item, bitmap);
-            Log.i(TAG, "Item id = " + item.getTitle());
-            mBasemapItemList.add(portalItemData);
-          }
-        }
-      }
-    }
   }
 
   // Handle callback on committing edits to server

@@ -33,8 +33,10 @@
     <string name="my_location">My Location</string>
     <string name="need_location_fix">Need a location fix before \'My Location\' can be used</string>
     
+    <!-- dialog titles -->
+    <string name="title_basemaps_dialog">Select Base Map</string>
     <string name="title_directions_dialog">Directions</string>
-
+    
     <!-- popup menu items -->
     <string name="menu_edit">edit</string>
     <string name="menu_delete">delete</string>
