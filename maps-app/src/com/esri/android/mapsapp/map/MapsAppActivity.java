@@ -24,11 +24,8 @@
 
 package com.esri.android.mapsapp.map;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -54,17 +51,14 @@ import com.esri.android.map.GraphicsLayer;
 import com.esri.android.map.LocationDisplayManager;
 import com.esri.android.map.LocationDisplayManager.AutoPanMode;
 import com.esri.android.map.MapView;
-import com.esri.android.map.ags.ArcGISFeatureLayer;
 import com.esri.android.map.event.OnLongPressListener;
 import com.esri.android.map.event.OnStatusChangedListener;
-import com.esri.android.map.popup.Popup;
 import com.esri.android.mappsapp.basemaps.BasemapsDialogFragment;
 import com.esri.android.mappsapp.basemaps.BasemapsDialogFragment.BasemapsDialogListener;
 import com.esri.android.mapsapp.R;
 import com.esri.android.mapsapp.location.DirectionsDialogFragment;
 import com.esri.android.mapsapp.location.DirectionsDialogFragment.DirectionsDialogListener;
 import com.esri.android.mapsapp.location.ReverseGeocoding;
-import com.esri.android.mapsapp.map.PopupFragment.OnEditListener;
 import com.esri.core.geometry.Envelope;
 import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
@@ -73,8 +67,6 @@ import com.esri.core.geometry.Point;
 import com.esri.core.geometry.Polyline;
 import com.esri.core.geometry.SpatialReference;
 import com.esri.core.geometry.Unit;
-import com.esri.core.map.CallbackListener;
-import com.esri.core.map.FeatureEditResult;
 import com.esri.core.map.Graphic;
 import com.esri.core.symbol.PictureMarkerSymbol;
 import com.esri.core.symbol.SimpleLineSymbol;
@@ -94,8 +86,7 @@ import com.esri.core.tasks.na.StopGraphic;
 /**
  * Entry point into the Maps App.
  */
-public class MapsAppActivity extends Activity implements OnEditListener, BasemapsDialogListener,
-    DirectionsDialogListener {
+public class MapsAppActivity extends Activity implements BasemapsDialogListener, DirectionsDialogListener {
 
   private static final String TAG = "MapsAppActivity";
 
@@ -195,7 +186,6 @@ public class MapsAppActivity extends Activity implements OnEditListener, Basemap
       mMapView.recycle();
     }
     mMapView = mapView;
-    mMapView.setOnSingleTapListener(new SingleTapListener(mMapView));
     // attribute ESRI logo to map
     mMapView.setEsriLogoVisible(true);
     // enable map to wrap around date line
@@ -448,45 +438,6 @@ public class MapsAppActivity extends Activity implements OnEditListener, Basemap
 
   }
 
-  @Override
-  public void onDelete(ArcGISFeatureLayer fl, Popup popup) {
-    // Commit deletion to server
-    Graphic gr = (Graphic) popup.getFeature();
-    if (gr == null)
-      return;
-    fl.applyEdits(null, new Graphic[] { gr }, null, new EditCallbackListener(this, fl, popup, true, "Deleting feature"));
-
-    // Dismiss popup
-    this.getFragmentManager().popBackStack();
-  }
-
-  @Override
-  public void onEdit(ArcGISFeatureLayer fl, Popup popup) {
-    // Set popup into editing mode
-    popup.setEditMode(true);
-    // refresh menu items
-    this.invalidateOptionsMenu();
-  }
-
-  @Override
-  public void onSave(ArcGISFeatureLayer fl, Popup popup) {
-    // Commit edits to server
-    Graphic gr = (Graphic) popup.getFeature();
-    if (gr != null) {
-      Map<String, Object> attributes = gr.getAttributes();
-      Map<String, Object> updatedAttrs = popup.getUpdatedAttributes();
-      for (Entry<String, Object> entry : updatedAttrs.entrySet()) {
-        attributes.put(entry.getKey(), entry.getValue());
-      }
-      Graphic newgr = new Graphic(gr.getGeometry(), null, attributes);
-      fl.applyEdits(null, null, new Graphic[] { newgr }, new EditCallbackListener(this, fl, popup, true,
-          "Saving feature"));
-    }
-
-    // Dismiss popup
-    this.getFragmentManager().popBackStack();
-  }
-
   /*
    * This class provides an AsyncTask that performs a geolocation request on a background thread and displays the first
    * result on the map on the UI thread.
@@ -668,35 +619,29 @@ public class MapsAppActivity extends Activity implements OnEditListener, Basemap
         Toast.makeText(MapsAppActivity.this, getString(R.string.routingFailed), Toast.LENGTH_LONG).show();
         return;
       }
-      if (!isCancelled()) {
-        /*
-         * if (result == null) { // update UI with notice that no results were found Toast toast =
-         * Toast.makeText(MapsAppActivity.this, "No result found.", Toast.LENGTH_LONG); toast.show(); } else {
-         */
 
-        // Get first item in list of routes provided by server
-        route = result.getRoutes().get(0);
+      // Get first item in list of routes provided by server
+      route = result.getRoutes().get(0);
 
-        // Create polyline graphic of the full route
-        SimpleLineSymbol lineSymbol = new SimpleLineSymbol(Color.RED, 2, STYLE.SOLID);
-        Graphic routeGraphic = new Graphic(route.getRouteGraphic().getGeometry(), lineSymbol);
+      // Create polyline graphic of the full route
+      SimpleLineSymbol lineSymbol = new SimpleLineSymbol(Color.RED, 2, STYLE.SOLID);
+      Graphic routeGraphic = new Graphic(route.getRouteGraphic().getGeometry(), lineSymbol);
 
-        // Create point graphic to mark end of route
-        Drawable marker = getResources().getDrawable(R.drawable.stat_finish);
-        PictureMarkerSymbol destinationSymbol = new PictureMarkerSymbol(mMapView.getContext(), marker);
-        // NOTE: marker's bounds not set till marker is used to create destinationSymbol
-        float offsetY = convertPixelsToDp(MapsAppActivity.this, marker.getBounds().bottom);
-        destinationSymbol.setOffsetY(offsetY);
-        int endPointIndex = ((Polyline) routeGraphic.getGeometry()).getPointCount() - 1;
-        Graphic endGraphic = new Graphic(((Polyline) routeGraphic.getGeometry()).getPoint(endPointIndex),
-            destinationSymbol);
+      // Create point graphic to mark end of route
+      Drawable marker = getResources().getDrawable(R.drawable.stat_finish);
+      PictureMarkerSymbol destinationSymbol = new PictureMarkerSymbol(mMapView.getContext(), marker);
+      // NOTE: marker's bounds not set till marker is used to create destinationSymbol
+      float offsetY = convertPixelsToDp(MapsAppActivity.this, marker.getBounds().bottom);
+      destinationSymbol.setOffsetY(offsetY);
+      int endPointIndex = ((Polyline) routeGraphic.getGeometry()).getPointCount() - 1;
+      Graphic endGraphic = new Graphic(((Polyline) routeGraphic.getGeometry()).getPoint(endPointIndex),
+          destinationSymbol);
 
-        // route and end point graphics to route layer
-        routeLayer.addGraphics(new Graphic[] { routeGraphic, endGraphic });
+      // route and end point graphics to route layer
+      routeLayer.addGraphics(new Graphic[] { routeGraphic, endGraphic });
 
-        // Zoom to the extent of the entire route with a padding
-        mMapView.setExtent(route.getEnvelope(), 100);
-      }
+      // Zoom to the extent of the entire route with a padding
+      mMapView.setExtent(route.getEnvelope(), 100);
     }
 
   }
@@ -714,130 +659,4 @@ public class MapsAppActivity extends Activity implements OnEditListener, Basemap
     return dp;
   }
 
-  // Handle callback on committing edits to server
-  private class EditCallbackListener implements CallbackListener<FeatureEditResult[][]> {
-    private String operation = "Operation ";
-
-    private ArcGISFeatureLayer featureLayer = null;
-
-    private boolean existingFeature = true;
-
-    private Popup popup = null;
-
-    private Context context;
-
-    public EditCallbackListener(Context context, ArcGISFeatureLayer featureLayer, Popup popup, boolean existingFeature,
-        String msg) {
-      this.operation = msg;
-      this.featureLayer = featureLayer;
-      this.existingFeature = existingFeature;
-      this.popup = popup;
-      this.context = context;
-    }
-
-    @Override
-    public void onCallback(FeatureEditResult[][] objs) {
-      if (featureLayer == null || !featureLayer.isInitialized() || !featureLayer.isEditable())
-        return;
-
-      runOnUiThread(new Runnable() {
-
-        @Override
-        public void run() {
-          Toast.makeText(context, operation + " succeeded!", Toast.LENGTH_SHORT).show();
-        }
-      });
-
-      if (objs[1] == null || objs[1].length <= 0) {
-        // Save attachments to the server if newly added attachments
-        // exist.
-        // Retrieve object id of the feature
-        int oid;
-        if (existingFeature) {
-          oid = objs[2][0].getObjectId();
-        } else {
-          oid = objs[0][0].getObjectId();
-        }
-        // Get newly added attachments
-        List<File> attachments = popup.getAddedAttachments();
-        if (attachments != null && attachments.size() > 0) {
-          for (File attachment : attachments) {
-            // Save newly added attachment based on the object id of
-            // the feature.
-            featureLayer.addAttachment(oid, attachment, new CallbackListener<FeatureEditResult>() {
-              @Override
-              public void onError(Throwable e) {
-                // Failed to save new attachments.
-                runOnUiThread(new Runnable() {
-                  @Override
-                  public void run() {
-                    Toast.makeText(context, "Adding attachment failed!", Toast.LENGTH_SHORT).show();
-                  }
-                });
-              }
-
-              @Override
-              public void onCallback(FeatureEditResult arg0) {
-                // New attachments have been saved.
-                runOnUiThread(new Runnable() {
-                  @Override
-                  public void run() {
-                    Toast.makeText(context, "Adding attachment succeeded!.", Toast.LENGTH_SHORT).show();
-                  }
-                });
-              }
-            });
-          }
-        }
-
-        // Delete attachments if some attachments have been mark as
-        // delete.
-        // Get ids of attachments which are marked as delete.
-        List<Integer> attachmentIDs = popup.getDeletedAttachmentIDs();
-        if (attachmentIDs != null && attachmentIDs.size() > 0) {
-          int[] ids = new int[attachmentIDs.size()];
-          for (int i = 0; i < attachmentIDs.size(); i++) {
-            ids[i] = attachmentIDs.get(i);
-          }
-          // Delete attachments
-          featureLayer.deleteAttachments(oid, ids, new CallbackListener<FeatureEditResult[]>() {
-            @Override
-            public void onError(Throwable e) {
-              // Failed to delete attachments
-              runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                  Toast.makeText(context, "Deleting attachment failed!", Toast.LENGTH_SHORT).show();
-                }
-              });
-            }
-
-            @Override
-            public void onCallback(FeatureEditResult[] objs) {
-              // Attachments have been removed.
-              runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                  Toast.makeText(context, "Deleting attachment succeeded!", Toast.LENGTH_SHORT).show();
-                }
-              });
-            }
-          });
-        }
-
-      }
-    }
-
-    @Override
-    public void onError(Throwable e) {
-      runOnUiThread(new Runnable() {
-
-        @Override
-        public void run() {
-          Toast.makeText(context, operation + " failed!", Toast.LENGTH_SHORT).show();
-        }
-      });
-    }
-
-  }
 }

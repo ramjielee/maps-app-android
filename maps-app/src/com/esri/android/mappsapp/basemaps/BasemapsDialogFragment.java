@@ -93,31 +93,22 @@ public class BasemapsDialogFragment extends DialogFragment implements BasemapsAd
     getDialog().setTitle(R.string.title_basemaps_dialog);
 
     // Inflate basemaps grid layout and setup list and adapter to back it
-    GridView view = (GridView)inflater.inflate(R.layout.grid_layout, container, false);
+    GridView view = (GridView) inflater.inflate(R.layout.grid_layout, container, false);
     mBasemapItemList = new ArrayList<BasemapItem>();
     mBasemapsAdapter = new BasemapsAdapter(getActivity(), mBasemapItemList, this);
     view.setAdapter(mBasemapsAdapter);
-
     return view;
   }
 
   @Override
-  public void onViewCreated(View view, Bundle savedInstanceState) {
-    super.onViewCreated(view, savedInstanceState);
-    
-    //Moved this from onCreateView() in effort to get progress dialofg showing
-    
-    // Search for available basemaps and populate the grid with them
-    new BasemapSearchAsyncTask().execute();
+  public void onResume() {
+    super.onResume();
 
-    mProgressDialog.setMessage(getString(R.string.fetching_basemaps));
-    mProgressDialog.setOnDismissListener(new OnDismissListener() {
-      @Override
-      public void onDismiss(DialogInterface arg0) {
-        //BasemapSearchAsyncTask.this.cancel(true);
-      }
-    });
-    mProgressDialog.show();
+    // If no basemaps yet, search for available basemaps and populate the grid with them.
+    // Note we do this here rather in onCreateView() because otherwise the progress dialog doesn't show
+    if (mBasemapItemList.size() == 0) {
+      new BasemapSearchAsyncTask().execute();
+    }
 
   }
 
@@ -172,12 +163,14 @@ public class BasemapsDialogFragment extends DialogFragment implements BasemapsAd
         dismiss();
         return;
       }
-      if (isCancelled()) {
-        dismiss();
-      } else {
-        // Success - update grid with results
-        mBasemapsAdapter.notifyDataSetChanged();
-      }
+      // Success - update grid with results
+      mBasemapsAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    protected void onCancelled(Void result) {
+      // Dismiss the whole dialog if this task is cancelled
+      dismiss();
     }
 
     /**
@@ -290,11 +283,9 @@ public class BasemapsDialogFragment extends DialogFragment implements BasemapsAd
         mException.printStackTrace();
         Toast.makeText(getActivity(), getString(R.string.basemapSearchFailed), Toast.LENGTH_LONG).show();
       } else {
-        if (!isCancelled()) {
-          // Success - create new MapView and pass it to MapsAppActivity to display
-          MapView mapView = new MapView(getActivity(), mRecWebmap, selectedBasemap, null, null);
-          mBasemapsDialogListener.onBasemapChanged(mapView);
-        }
+        // Success - create new MapView and pass it to MapsAppActivity to display
+        MapView mapView = new MapView(getActivity(), mRecWebmap, selectedBasemap, null, null);
+        mBasemapsDialogListener.onBasemapChanged(mapView);
       }
       dismiss();
     }
