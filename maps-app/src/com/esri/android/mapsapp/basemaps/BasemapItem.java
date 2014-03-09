@@ -22,7 +22,7 @@
  *
  */
 
-package com.esri.android.mappsapp.basemaps;
+package com.esri.android.mapsapp.basemaps;
 
 import android.graphics.Bitmap;
 

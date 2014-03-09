@@ -1,4 +1,4 @@
-package com.esri.android.mappsapp.basemaps;
+package com.esri.android.mapsapp.basemaps;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,8 +18,8 @@ import android.view.ViewGroup;
 import android.widget.GridView;
 import android.widget.Toast;
 
-import com.esri.android.mappsapp.basemaps.BasemapsAdapter.BasemapsAdapterClickListener;
 import com.esri.android.mapsapp.R;
+import com.esri.android.mapsapp.basemaps.BasemapsAdapter.BasemapsAdapterClickListener;
 import com.esri.core.portal.Portal;
 import com.esri.core.portal.PortalGroup;
 import com.esri.core.portal.PortalInfo;
