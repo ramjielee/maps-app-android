@@ -26,6 +26,7 @@ package com.esri.android.mapsapp.map;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -42,6 +43,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -50,15 +52,14 @@ import android.widget.Toast;
 import com.esri.android.map.GraphicsLayer;
 import com.esri.android.map.LocationDisplayManager;
 import com.esri.android.map.LocationDisplayManager.AutoPanMode;
+import com.esri.android.map.MapOnTouchListener;
 import com.esri.android.map.MapView;
-import com.esri.android.map.event.OnLongPressListener;
 import com.esri.android.map.event.OnStatusChangedListener;
 import com.esri.android.mappsapp.basemaps.BasemapsDialogFragment;
 import com.esri.android.mappsapp.basemaps.BasemapsDialogFragment.BasemapsDialogListener;
 import com.esri.android.mapsapp.R;
 import com.esri.android.mapsapp.location.DirectionsDialogFragment;
 import com.esri.android.mapsapp.location.DirectionsDialogFragment.DirectionsDialogListener;
-import com.esri.android.mapsapp.location.ReverseGeocoding;
 import com.esri.core.geometry.Envelope;
 import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
@@ -77,6 +78,7 @@ import com.esri.core.symbol.TextSymbol;
 import com.esri.core.tasks.geocode.Locator;
 import com.esri.core.tasks.geocode.LocatorFindParameters;
 import com.esri.core.tasks.geocode.LocatorGeocodeResult;
+import com.esri.core.tasks.geocode.LocatorReverseGeocodeResult;
 import com.esri.core.tasks.na.NAFeaturesAsFeature;
 import com.esri.core.tasks.na.Route;
 import com.esri.core.tasks.na.RouteParameters;
@@ -92,17 +94,14 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
   private static final String TAG = "MapsAppActivity";
 
   private static final String KEY_IS_LOCATION_TRACKING = "IsLocationTracking";
-  
+
   MapView mMapView = null;
 
   String mMapViewState;
-  
-  boolean mIsLocationTracking;
-  
-  int basemap;
 
-  // Geocoding definitions
-  Locator locator;
+  boolean mIsLocationTracking;
+
+  int basemap;
 
   LocatorGeocodeResult geocodeResult;
 
@@ -148,13 +147,12 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
   // graphics layer to show routes
   GraphicsLayer mRouteLayer;
 
-  // bundle to get routing parameters back to UI
-  Bundle extras;
+  MotionEvent mLongPressEvent;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    
+
     if (savedInstanceState == null) {
       mIsLocationTracking = false;
     } else {
@@ -211,7 +209,7 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
 
     setContentView(mMapView);
 
-    // Zoom to device location and accept intent from route layout
+    // Setup listener for map initialized
     mMapView.setOnStatusChangedListener(new OnStatusChangedListener() {
 
       private static final long serialVersionUID = 1L;
@@ -220,7 +218,16 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
       public void onStatusChanged(Object source, STATUS status) {
         Log.i(TAG, "MapView.setOnStatusChangedListener() status=" + status.toString());
         if (source == mMapView && status == STATUS.INITIALIZED) {
-          if (mMapViewState != null) {
+          if (mMapViewState == null) {
+            /*
+             * // Set initial extent SpatialReference mSR = SpatialReference.create(3857); Point p1 =
+             * GeometryEngine.project(-120.0, 0.0, mSR); Point p2 = GeometryEngine.project(-60.0, 50.0, mSR); Envelope
+             * initExtent = new Envelope(p1.getX(), p1.getY(), p2.getX(), p2.getY()); mMapView.setExtent(initExtent);
+             */
+
+            // Starting location tracking will cause zoom to My Location
+            startLocationTracking();
+          } else {
             mMapView.restoreState(mMapViewState);
           }
           // add search and routing layers
@@ -229,17 +236,49 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
       }
     });
 
-    mMapView.setOnLongPressListener(new OnLongPressListener() {
+    // Setup use of magnifier on a long press on the map
+    mMapView.setShowMagnifierOnLongPress(true);
+    mLongPressEvent = null;
+    /*
+     * This seems to stop the magnifier working: mMapView.setOnLongPressListener(new OnLongPressListener() { private
+     * static final long serialVersionUID = 1L;
+     * @Override public boolean onLongPress(float x, float y) { Point mapPoint = mMapView.toMapPoint(x, y); new
+     * ReverseGeocoding(MapsAppActivity.this, mMapView).execute(mapPoint); return true; } });
+     */
 
-      private static final long serialVersionUID = 1L;
+    mMapView.setOnTouchListener(new MapOnTouchListener(this, mMapView) {
+      @Override
+      public boolean onTouch(View v, MotionEvent event) {
+        if (event.getActionMasked() == MotionEvent.ACTION_DOWN) {
+          // Start of a new gesture. Make sure mLongPressEvent is cleared.
+          mLongPressEvent = null;
+        }
+        return super.onTouch(v, event);
+      }
 
       @Override
-      public boolean onLongPress(float x, float y) {
-        Point mapPoint = mMapView.toMapPoint(x, y);
-        new ReverseGeocoding(MapsAppActivity.this, mMapView).execute(mapPoint);
-        return true;
+      public void onLongPress(MotionEvent point) {
+        // Set mLongPressEvent to indicate we are processing a long-press
+        mLongPressEvent = point;
+        super.onLongPress(point);
       }
+
+      @Override
+      public boolean onDragPointerUp(MotionEvent from, final MotionEvent to) {
+        if (mLongPressEvent != null) {
+          // This is the end of a long-press that will have displayed the magnifier.
+          Point mapPoint = mMapView.toMapPoint(to.getX(), to.getY());
+          new ReverseGeocodingAsyncTask().execute(mapPoint);
+          mLongPressEvent = null;
+          // remove any previous graphics, callouts and routes
+          mLocationLayer.removeAll();
+          mRouteLayer.removeAll();
+        }
+        return super.onDragPointerUp(from, to);
+      }
+
     });
+
   }
 
   private void startLocationTracking() {
@@ -285,7 +324,7 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
     mIsLocationTracking = true;
   }
 
-  private void addGraphicLayers() {
+  void addGraphicLayers() {
     // Add location layer
     if (mLocationLayer == null) {
       mLocationLayer = new GraphicsLayer();
@@ -387,7 +426,7 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
-    
+
     outState.putBoolean(KEY_IS_LOCATION_TRACKING, mIsLocationTracking);
   }
 
@@ -511,7 +550,7 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
       List<LocatorGeocodeResult> results = null;
 
       // Create locator using default online geocoding service and tell it to find the given address
-      locator = Locator.createOnlineLocator();
+      Locator locator = Locator.createOnlineLocator();
       try {
         results = locator.find(params[0]);
       } catch (Exception e) {
@@ -677,14 +716,9 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
       Graphic routeGraphic = new Graphic(route.getRouteGraphic().getGeometry(), lineSymbol);
 
       // Create point graphic to mark end of route
-      Drawable marker = getResources().getDrawable(R.drawable.stat_finish);
-      PictureMarkerSymbol destinationSymbol = new PictureMarkerSymbol(mMapView.getContext(), marker);
-      // NOTE: marker's bounds not set till marker is used to create destinationSymbol
-      float offsetY = convertPixelsToDp(MapsAppActivity.this, marker.getBounds().bottom);
-      destinationSymbol.setOffsetY(offsetY);
       int endPointIndex = ((Polyline) routeGraphic.getGeometry()).getPointCount() - 1;
-      Graphic endGraphic = new Graphic(((Polyline) routeGraphic.getGeometry()).getPoint(endPointIndex),
-          destinationSymbol);
+      Point point = ((Polyline) routeGraphic.getGeometry()).getPoint(endPointIndex);
+      Graphic endGraphic = createMarkerGraphic(point);
 
       // route and end point graphics to route layer
       mRouteLayer.addGraphics(new Graphic[] { routeGraphic, endGraphic });
@@ -696,13 +730,89 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
   }
 
   /**
+   * This class provides an AsyncTask that performs a reverse geocoding request on a background thread and displays the
+   * resultant point on the map on the UI thread.
+   */
+  public class ReverseGeocodingAsyncTask extends AsyncTask<Point, Void, LocatorReverseGeocodeResult> {
+    private Exception mException;
+    private Point mPoint;
+
+    @Override
+    protected void onPreExecute() {
+      // Display progress dialog on UI thread
+      mProgressDialog.setMessage(getString(R.string.reverse_geocoding));
+      mProgressDialog.show();
+    }
+
+    @Override
+    protected LocatorReverseGeocodeResult doInBackground(Point... params) {
+      // Perform reverse geocoding request on background thread
+      mException = null;
+      LocatorReverseGeocodeResult result = null;
+      mPoint = params[0];
+
+      // Create locator using default online geocoding service and tell it to find the given point
+      Locator locator = Locator.createOnlineLocator();
+      try {
+        // Our input and output spatial reference will be the same as the map
+        SpatialReference mapRef = mMapView.getSpatialReference();
+        result = locator.reverseGeocode(mPoint, 50.0, mapRef, mapRef);
+      } catch (Exception e) {
+        mException = e;
+      }
+      // return the resulting point(s)
+      return result;
+    }
+
+    @Override
+    protected void onPostExecute(LocatorReverseGeocodeResult result) {
+      // Display results on UI thread
+      mProgressDialog.dismiss();
+      if (mException != null) {
+        Log.w(TAG, "LocatorSyncTask failed with:");
+        mException.printStackTrace();
+        Toast.makeText(MapsAppActivity.this, getString(R.string.addressSearchFailed), Toast.LENGTH_LONG).show();
+        return;
+      }
+
+      String resultAddress;
+
+      // Construct a nicely formatted address from the results
+      StringBuilder address = new StringBuilder();
+      if (result != null && result.getAddressFields() != null) {
+        Map<String, String> addressFields = result.getAddressFields();
+        address.append(String.format("%s\n%s, %s %s", addressFields.get("Address"), addressFields.get("City"),
+            addressFields.get("Region"), addressFields.get("Postal")));
+
+        // Show the results of the reverse geocoding in a toast.
+        resultAddress = address.toString();
+        Toast.makeText(MapsAppActivity.this, resultAddress, Toast.LENGTH_LONG).show();
+
+        // Draw marker on map.
+        // create marker symbol to represent location TODO: need offset?
+        SimpleMarkerSymbol symbol = new SimpleMarkerSymbol(Color.RED, 16, SimpleMarkerSymbol.STYLE.CROSS);
+        mLocationLayer.addGraphic(new Graphic(mPoint, symbol));
+      }
+    }
+  }
+
+  Graphic createMarkerGraphic(Point point) {
+    Drawable marker = getResources().getDrawable(R.drawable.marker);
+    PictureMarkerSymbol destinationSymbol = new PictureMarkerSymbol(mMapView.getContext(), marker);
+    // NOTE: marker's bounds not set till marker is used to create destinationSymbol
+    float offsetY = convertPixelsToDp(MapsAppActivity.this, marker.getBounds().bottom);
+    destinationSymbol.setOffsetY(offsetY);
+    return new Graphic(point, destinationSymbol);
+  }
+
+  /**
    * Converts device specific pixels to density independent pixels.
    * 
    * @param context
    * @param px number of device specific pixels
    * @return number of density independent pixels
    */
-  public static float convertPixelsToDp(Context context, float px) {
+  private float convertPixelsToDp(Context context, float px) {
     DisplayMetrics metrics = context.getResources().getDisplayMetrics();
     float dp = px / (metrics.densityDpi / 160f);
     return dp;

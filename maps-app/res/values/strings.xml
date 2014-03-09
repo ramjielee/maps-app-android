@@ -18,7 +18,7 @@
     <string name="routingservice_url">http://sampleserver3.arcgisonline.com/ArcGIS/rest/services/Network/USA/NAServer/Route</string>
 
     <!-- place search hint -->
-    <string name="address">San Diego Airport</string>
+    <string name="address">Place name or address</string>
 
     <!-- action bar titles -->
     <string name="menu_search">Search</string>
@@ -48,6 +48,7 @@
     <string name="fetching_selected_basemap">Fetching Selected Basemap</string>
     <string name="address_search">Searching for Address</string>
     <string name="route_search">Searching for Route</string>
+    <string name="reverse_geocoding">Reverse Geocoding</string>
     <string name="basemapSearchFailed">Basemap search failed</string>
     <string name="routingFailed">Routing task failed</string>
     <string name="addressSearchFailed">Address search failed</string>
