@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+	<!-- Application custom theme -->
+	<!-- This color should be overridden by each app -->
+	<color name="app_actionbar_color">@color/esri_purple</color>
+
+	<!-- Esri Colors - Neutrals (do not change, these are official colors. If you need to tweak the color you should define a new color) -->
+	<color name="esri_white">#FFFFFFFF</color>
+	<color name="esri_off_white">#FFF9F9F9</color>
+	<color name="esri_lightest_gray">#FFEDEDED</color>
+	<color name="esri_lighter_gray">#FFCCCCCC</color>
+	<color name="esri_light_gray">#FFA6A6A6</color>
+	<color name="esri_gray">#FF808080</color>
+	<color name="esri_dark_gray">#FF595959</color>
+	<color name="esri_darker_gray">#FF333333</color>
+	<color name="esri_darkest_gray">#FF1F1F1F</color>
+	<color name="esri_off_black">#FF050505</color>
+	<color name="esri_black">#FF000000</color>
+
+	<!-- Esri Colors - Brand Colors - Blue (do not change, these are official colors. If you need to tweak the color you should define a new color) -->
+	<color name="esri_lightest_blue">#FFE5F1F9</color>
+	<color name="esri_lighter_blue">#FFB9E0F7</color>
+	<color name="esri_light_blue">#FF137DC2</color>
+	<color name="esri_blue">#FF007AC2</color>
+	<color name="esri_dark_blue">#FF064673</color>
+	<color name="esri_darker_blue">#FF004575</color>
+
+	<!-- Esri Colors - Brand Colors - Green (do not change, these are official colors. If you need to tweak the color you should define a new color) -->
+	<color name="esri_lightest_green">#FFCCDE91</color>
+	<color name="esri_lighter_green">#FFCCDF8D</color>
+	<color name="esri_light_green">#FFA2C950</color>
+	<color name="esri_green">#FF35AC46</color>
+	<color name="esri_dark_green">#FF296A32</color>
+
+	<!-- Esri Colors - Brand Colors - Brights (do not change, these are official colors. If you need to tweak the color you should define a new color) -->
+	<color name="esri_bright_orange">#FFF89927</color>
+	<color name="esri_bright_yellow">#FFFFEC4F</color>
+	<color name="esri_bright_red">#FFDA4D1E</color>
+	<color name="esri_bright_caution">#FFB9392F</color>
+	<color name="esri_bright_caution_light">#FFD6564D</color>
+
+	<!-- Esri Colors - Brand Colors - Purple (do not change, these are official colors. If you need to tweak the color you should define a new color) -->
+	<color name="esri_lightest_purple">#FFDFCCE3</color>
+	<color name="esri_lighter_purple">#FFB279B4</color>
+	<color name="esri_light_purple">#FF8F499C</color>
+	<color name="esri_purple">#FF762783</color>
+	<color name="esri_dark_purple">#FF6B1978</color>
+
+	<!-- Esri Colors - Brand Colors - Earth Tones (do not change, these are official colors. If you need to tweak the color you should define a new color) -->
+<color name="esri_earth_tone_light_tan">#FFF3F3EF</color>
+<color name="esri_earth_tone_tan">#FFF1F1F1</color>
+<color name="esri_earth_tone_dark_tan">#FFD3D3CF</color>
+<color name="esri_earth_tone_lighter_brown">#FFECDCB9</color>
+<color name="esri_earth_tone_light_brown">#FFBE9969</color>
+<color name="esri_earth_tone_brown">#FF7B4F1C</color>
+<color name="esri_earth_tone_dark_brown">#FF523B20</color>
+
+	<!-- Browse card colors -->
+	<color name="portal_item_background">@color/esri_white</color>
+	<color name="app_primary_background">@color/esri_lightest_gray</color>
+	<color name="app_secondary_background">#FF999999</color>
+	<color name="app_tertiary_background">@color/esri_lighter_gray</color>
+	<color name="title_text_color">@color/esri_white</color>
+	<color name="primary_text_color">@color/esri_darker_gray</color>
+	<color name="secondary_text_color">#FF888888</color>
+	<!-- Should be defined by each app in their own colors.xml -->
+	<color name="tertiary_text_color">#FF000000</color>
+	<color name="highlight_color">#FF000000</color>
+
+	<!-- Android ICS color -->
+	<color name="android_holo_light_blue">#FF33B5E5</color>
+	<color name="android_holo_light_blue_translucent">#5533B5E5</color>
+	<color name="transparent">#00000000</color>
+
+	<!-- Buttons stroke color -->
+	<color name="application_gps_button_checked_color">#FFE19D00</color>
+	<color name="application_mapview_button_stroke_color">#AA505050</color>
+	<color name="application_mapview_button_background_color">#AAFFFFFF</color>
+	<color name="tool_bar_stroke_color">#FFC7C7C7</color>
+
+	<!-- Misc -->
+	<color name="feature_list_spinner_dropdown_item_textview_text_color">@android:color/black</color>
+	<color name="app_background">#FF666666</color>
+	<color name="panel_background">#FFD0D0D0</color>
+	<color name="configuration_chooser_panel_background">#FFffffff</color>
+	<color name="widget_bar_background">@color/app_background</color>
+	<color name="bookmark_listview_background">#FFDFDFDF</color>
+	<color name="popup_widgetbar_holder_layout_background">@android:color/white</color>
+	<color name="divider_light_grey">#FFEEEEEE</color>
+
+	<!-- Line page indicator -->
+	<color name="line_page_indicator_selected_color">@color/android_holo_light_blue</color>
+	<color name="line_page_indicator_unselected_color">#FF888888</color>
+
+	<!-- Feature ribbon -->
+	<color name="map_results_ribbon_background">#99444444</color>
+	<color name="map_results_ribbon_sub_text_color">#FF666666</color>
+
+	<!-- Basemap thumbnail -->
+	<color name="basemap_thumbnail_title_default">#77444444</color>
+	<color name="basemap_thumbnail_title_pressed">#9933B5E5</color>
+	<color name="basemap_thumbnail_default">@color/transparent</color>
+	<color name="basemap_thumbnail_pressed">#9933B5E5</color>
+	<color name="basemap_info_thumbnail_switch_textview_background">#88000000</color>
+	<color name="basemap_item_background">#FFF0F0F0</color>
+	<color name="basemap_thumbnail_switch_background">#AA000000</color>
+	<color name="basemap_thumbnail_switch_text">#FF33B5E5</color>
+
+	<!-- Map info thumbnail -->
+	<color name="map_thumbnail_title_default">#99444444</color>
+	<color name="map_thumbnail_title_pressed">#9933B5E5</color>
+	<color name="map_thumbnail_default">@color/transparent</color>
+	<color name="map_thumbnail_pressed">#9933B5E5</color>
+	<color name="map_item_background">#FFDEDEDE</color>
+
+	<!-- Map result -->
+	<color name="map_results_list_background">@android:color/white</color>
+	<color name="map_results_ribbon_item_default">@android:color/white</color>
+	<color name="map_results_ribbon_item_pressed">@color/android_holo_light_blue</color>
+	<color name="map_results_list_selected_item_title_text_color">@color/esri_blue</color>
+	<color name="map_results_list_selected_item_subtitle_text_color">@color/esri_light_blue</color>
+
+	<!-- Configuration item -->
+	<color name="configuration_item_actionbar_layout_background">#AA262626</color>
+	<color name="configuration_item_identity_textview_text_color">#FF555555</color>
+
+	<!-- App widget -->
+	<color name="simple_app_widget_name_text_color">@android:color/white</color>
+	<color name="simple_app_widget_name_background">#99333333</color>
+	<color name="grid_app_widget_background">#33333333</color>
+	<color name="grid_app_widget_empty_textview_text_color">@android:color/white</color>
+
+	<!-- Bookmarks -->
+	<color name="bookmark_header_color">@android:color/black</color>
+	<color name="bookmark_vertical_divider_color">#FFD6D6D6</color>
+
+	<!-- Simple Popup Window -->
+	<color name="simple_popup_window_background">#FFEFEFEF</color>
+	<color name="simple_popup_window_divider">#FFD7D7D7</color>
+
+	<!-- Content controller -->
+	<color name="content_controller_separator">@color/android_holo_light_blue</color>
+
+	<!-- Route -->
+	<color name="turn_highlight_fill_color">#1A000000</color>
+	<color name="route_line_color">#FF007DFA</color>
+	<color name="route_line_segment_color">#AA00F2FF</color>
+
+	<!-- Accounts -->
+	<color name="account_dialog_sub_text_color">#FF888888</color>
+	<color name="account_dialog_divider_color">#FFACACAC</color>
+
+	<!-- Text -->
+	<color name="disabled_text_color">#FF888888</color>
+
+</resources>

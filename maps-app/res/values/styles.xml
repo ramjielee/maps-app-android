@@ -1,0 +1,371 @@
+<resources xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res/com.esri.arcgis.viewer">
+
+	<!-- Application custom theme - Each app should define what app_actionbar_color actually should be, otherwise it will default to black. -->
+	<style name="Theme.Custom" parent="@android:style/Theme.Holo.Light.DarkActionBar">
+		<item name="android:actionBarStyle">@style/ActionBar.Custom</item>
+	</style>
+
+	<style name="ActionBar.Custom" parent="@android:style/Widget.Holo.Light.ActionBar.Solid.Inverse">
+		<item name="android:background">@color/app_actionbar_color</item>
+		<item name="android:backgroundSplit">@color/app_actionbar_color</item>
+	</style>
+
+	<!-- Portal Item -->
+	<style name="portal_item_title_text" parent="@style/single_line_text">
+		<item name="android:paddingLeft">@dimen/portal_item_title_padding_left</item>
+		<item name="android:paddingTop">@dimen/portal_item_title_padding_top</item>
+		<item name="android:paddingRight">@dimen/portal_item_title_padding_right</item>
+		<item name="android:paddingBottom">@dimen/portal_item_title_padding_bottom</item>
+		<item name="android:textColor">@color/primary_text_color</item>
+		<item name="android:textSize">@dimen/portal_item_title_text_size</item>
+	</style>
+
+	<style name="portal_item_sub_text" parent="@style/single_line_text">
+		<item name="android:paddingLeft">@dimen/portal_item_sub_text_padding_left</item>
+		<item name="android:paddingRight">@dimen/portal_item_sub_text_padding_right</item>
+		<item name="android:paddingBottom">@dimen/portal_item_sub_text_padding_bottom</item>
+		<item name="android:paddingTop">@dimen/portal_item_sub_text_padding_top</item>
+		<item name="android:textSize">@dimen/portal_item_sub_text_size</item>
+		<item name="android:layout_width">wrap_content</item>
+		<item name="android:layout_height">wrap_content</item>
+		<item name="android:ellipsize">end</item>
+		<item name="android:singleLine">true</item>
+	</style>
+
+	<!-- Dialog Header -->
+	<style name="dialog_title_text_style">
+		<item name="android:textColor">@color/title_text_color</item>
+		<item name="android:textSize">@dimen/dialog_header_title_text_size</item>
+		<item name="android:typeface">sans</item>
+		<item name="android:textStyle">normal</item>
+		<item name="android:maxLines">1</item>
+		<item name="android:ellipsize">end</item>
+		<item name="android:singleLine">true</item>
+		<item name="android:gravity">center</item>
+		<item name="android:padding">@dimen/dialog_header_title_textview_padding</item>
+	</style>
+
+	<!-- Search -->
+	<style name="find_place_result_item_text" parent="@style/single_line_text">
+		<item name="android:textSize">@dimen/list_item_text_size</item>
+	</style>
+
+	<!-- Bookmark -->
+	<style name="bookmark_list_item_label_text" parent="@style/single_line_text">
+		<item name="android:layout_gravity">center_vertical</item>
+		<item name="android:layout_margin">@dimen/bookmark_list_item_label_textview_margin</item>
+		<item name="android:paddingLeft">@dimen/bookmark_list_item_label_textview_padding_left</item>
+		<item name="android:paddingTop">@dimen/bookmark_list_item_label_textview_padding_top</item>
+		<item name="android:paddingRight">@dimen/bookmark_list_item_label_textview_padding_right</item>
+		<item name="android:paddingBottom">@dimen/bookmark_list_item_label_textview_padding_bottom</item>
+		<item name="android:textSize">@dimen/bookmark_list_item_text_size</item>
+	</style>
+
+	<!-- Basemap grid -->
+	<style name="basemap_gridview">
+		<item name="android:horizontalSpacing">@dimen/basemap_gridview_horizontal_spacing</item>
+		<item name="android:verticalSpacing">@dimen/basemap_gridview_vertical_spacing</item>
+		<item name="android:numColumns">@integer/basemap_gridview_column_number</item>
+	</style>
+
+	<style name="basemap_thumbnail_image">
+		<item name="android:layout_gravity">center</item>
+		<item name="android:adjustViewBounds">true</item>
+		<item name="android:scaleType">fitXY</item>
+	</style>
+
+	<style name="basemap_grid_item_title_text" parent="@style/single_line_text">
+		<item name="android:paddingLeft">@dimen/basemap_grid_item_title_padding_left</item>
+		<item name="android:paddingTop">@dimen/basemap_grid_item_title_vertical_padding</item>
+		<item name="android:paddingRight">@dimen/basemap_grid_item_title_padding_right</item>
+		<item name="android:paddingBottom">@dimen/basemap_grid_item_title_vertical_padding</item>
+		<item name="android:textColor">@color/primary_text_color</item>
+		<item name="android:textSize">@dimen/basemap_grid_item_title_text_size</item>
+	</style>
+
+	<style name="basemap_grid_item_status_text" parent="@style/single_line_text">
+		<item name="android:paddingLeft">@dimen/basemap_grid_item_status_padding_left</item>
+		<item name="android:paddingRight">@dimen/basemap_grid_item_status_padding_right</item>
+		<item name="android:paddingBottom">@dimen/basemap_grid_item_status_padding_bottom</item>
+		<item name="android:textColor">@color/primary_text_color</item>
+		<item name="android:textSize">@dimen/basemap_grid_item_status_text_size</item>
+		<item name="android:textStyle">italic</item>
+	</style>
+
+	<!-- Basemap info dialog -->
+	<style name="basemap_info_thumbnail_switch_text">
+		<item name="android:layout_centerInParent">true</item>
+		<item name="android:layout_alignWithParentIfMissing">true</item>
+		<item name="android:gravity">center</item>
+		<item name="android:textColor">@android:color/white</item>
+		<item name="android:textSize">@dimen/basemap_switch_text_size</item>
+		<item name="android:background">@color/basemap_info_thumbnail_switch_textview_background</item>
+	</style>
+
+	<style name="basemap_info_title_text">
+		<item name="android:ellipsize">end</item>
+		<item name="android:maxLines">2</item>
+		<item name="android:paddingTop">@dimen/basemap_info_title_textview_padding_top</item>
+		<item name="android:paddingBottom">@dimen/basemap_info_title_textview_padding_bottom</item>
+		<item name="android:textSize">@dimen/basemap_title_text_size</item>
+		<item name="android:textStyle">bold</item>
+	</style>
+
+	<style name="basemap_info_modified_and_owner_text">
+		<item name="android:ellipsize">end</item>
+		<item name="android:maxLines">3</item>
+		<item name="android:paddingTop">@dimen/basemap_info_modified_and_owner_textview_padding_top</item>
+		<item name="android:paddingBottom">@dimen/basemap_info_modified_and_owner_textview_padding_bottom</item>
+		<item name="android:textSize">@dimen/basemap_small_detail_text_size</item>
+	</style>
+
+	<style name="basemap_info_header_text">
+		<item name="android:textStyle">bold</item>
+		<item name="android:textSize">@dimen/basemap_detail_text_size</item>
+		<item name="android:paddingBottom">@dimen/basemap_info_header_text_padding_bottom</item>
+	</style>
+
+	<style name="basemap_info_content_text">
+		<item name="android:textSize">@dimen/basemap_info_content_textview_text_size</item>
+		<item name="android:paddingTop">@dimen/basemap_info_content_textview_padding_top</item>
+		<item name="android:paddingBottom">@dimen/basemap_info_content_textview_padding_bottom</item>
+	</style>
+
+	<style name="basemap_info_detail_textview">
+		<item name="android:layout_width">wrap_content</item>
+		<item name="android:layout_height">wrap_content</item>
+		<item name="android:textSize">@dimen/basemap_detail_text_size</item>
+		<item name="android:layout_alignParentLeft">true</item>
+		<item name="android:typeface">sans</item>
+		<item name="android:textStyle">normal</item>
+		<item name="android:singleLine">false</item>
+		<item name="android:gravity">left</item>
+		<item name="android:paddingLeft">@dimen/basemap_info_detail_text_padding_left</item>
+		<item name="android:paddingTop">@dimen/basemap_info_detail_text_padding_top</item>
+		<item name="android:paddingRight">@dimen/basemap_info_detail_text_padding_right</item>
+		<item name="android:paddingBottom">@dimen/basemap_info_detail_text_padding_bottom</item>
+	</style>
+
+	<!-- Map info dialog -->
+	<style name="map_thumbnail_image">
+		<item name="android:layout_gravity">center</item>
+		<item name="android:adjustViewBounds">true</item>
+		<item name="android:scaleType">fitXY</item>
+		<item name="android:src">@color/map_item_background</item>
+	</style>
+
+	<style name="map_info_title_text">
+		<item name="android:ellipsize">end</item>
+		<item name="android:maxLines">2</item>
+		<item name="android:paddingTop">@dimen/map_info_title_textview_padding_top</item>
+		<item name="android:paddingBottom">@dimen/map_info_title_textview_padding_bottom</item>
+		<item name="android:textSize">@dimen/map_title_text_size</item>
+		<item name="android:textStyle">bold</item>
+	</style>
+
+	<style name="map_info_modified_and_owner_text">
+		<item name="android:ellipsize">end</item>
+		<item name="android:maxLines">3</item>
+		<item name="android:paddingTop">@dimen/map_info_modified_and_owner_textview_padding_top</item>
+		<item name="android:paddingBottom">@dimen/map_info_modified_and_owner_textview_padding_bottom</item>
+		<item name="android:textSize">@dimen/map_small_detail_text_size</item>
+	</style>
+
+	<style name="map_info_header_text">
+		<item name="android:textStyle">normal</item>
+		<item name="android:textColor">@color/primary_text_color</item>
+		<item name="android:textSize">@dimen/portal_item_title_text_size</item>
+		<item name="android:paddingBottom">@dimen/map_info_header_text_padding_bottom</item>
+	</style>
+
+	<style name="map_info_content_text">
+		<item name="android:textSize">@dimen/map_info_content_textview_text_size</item>
+		<item name="android:paddingTop">@dimen/map_info_content_textview_padding_top</item>
+		<item name="android:paddingBottom">@dimen/map_info_content_textview_padding_bottom</item>
+	</style>
+
+	<style name="map_info_detail_textview">
+		<item name="android:layout_width">wrap_content</item>
+		<item name="android:layout_height">wrap_content</item>
+		<item name="android:textSize">@dimen/map_detail_text_size</item>
+		<item name="android:layout_alignParentLeft">true</item>
+		<item name="android:typeface">sans</item>
+		<item name="android:textStyle">normal</item>
+		<item name="android:singleLine">false</item>
+		<item name="android:gravity">left</item>
+		<item name="android:paddingLeft">@dimen/map_info_detail_text_padding_left</item>
+		<item name="android:paddingTop">@dimen/map_info_detail_text_padding_top</item>
+		<item name="android:paddingRight">@dimen/map_info_detail_text_padding_right</item>
+		<item name="android:paddingBottom">@dimen/map_info_detail_text_padding_bottom</item>
+	</style>
+
+	<!-- Widget bar -->
+	<style name="widget_bar_title_text" parent="@style/single_line_text">
+		<item name="android:layout_width">wrap_content</item>
+		<item name="android:layout_height">@dimen/widget_bar_item_height</item>
+		<item name="android:layout_centerVertical">true</item>
+		<item name="android:paddingLeft">@dimen/widget_bar_title_textview_padding_left</item>
+		<item name="android:paddingRight">@dimen/widget_bar_title_textview_padding_right</item>
+		<item name="android:textColor">@color/primary_text_color</item>
+		<item name="android:textSize">@dimen/widget_bar_title_textview_text_size</item>
+	</style>
+
+	<style name="widget_bar_button_layout">
+		<item name="android:layout_width">wrap_content</item>
+		<item name="android:layout_height">@dimen/widget_bar_height</item>
+		<item name="android:layout_centerVertical">true</item>
+		<item name="android:layout_margin">@dimen/widget_bar_button_layout_margin</item>
+	</style>
+
+	<style name="widget_bar_button">
+		<item name="android:layout_width">@dimen/widget_bar_item_width</item>
+		<item name="android:layout_height">@dimen/widget_bar_item_height</item>
+	</style>
+
+	<style name="widget_bar_togglebutton" parent="@style/widget_bar_button">
+		<item name="android:text"></item>
+		<item name="android:textOn"></item>
+		<item name="android:textOff"></item>
+	</style>
+
+	<style name="widget_bar_feature_action_item">
+		<item name="android:padding">@dimen/widget_bar_feature_action_item_textview_padding</item>
+		<item name="android:gravity">center_vertical</item>
+		<item name="android:ellipsize">end</item>
+		<item name="android:singleLine">true</item>
+		<!-- <item name="android:textAppearance">?attr/textAppearanceLargePopupMenu</item> -->
+	</style>
+
+	<style name="tablet_land_map_panel_layout" parent="@style/widget_bar_togglebutton">
+		<item name="android:layout_marginBottom">@dimen/map_layout_margin_bottom</item>
+		<item name="android:layout_marginLeft">@dimen/map_layout_margin</item>
+		<item name="android:layout_marginRight">@dimen/map_layout_margin</item>
+		<item name="android:layout_marginTop">@dimen/map_layout_margin</item>
+	</style>
+
+	<!-- Map result ribbon -->
+	<style name="map_results_ribbon_action_item">
+		<item name="android:padding">@dimen/map_results_ribbon_action_item_textview_padding</item>
+		<item name="android:gravity">center</item>
+		<item name="android:textSize">@dimen/map_results_ribbon_text_size</item>
+		<item name="android:background">@android:color/white</item>
+	</style>
+
+	<style name="map_results_ribbon_item_text">
+		<item name="android:layout_marginLeft">@dimen/map_results_ribbon_item_text_horizontal_margin</item>
+		<item name="android:layout_marginRight">@dimen/map_results_ribbon_item_text_horizontal_margin</item>
+		<item name="android:gravity">left|center_vertical</item>
+		<item name="android:lines">1</item>
+		<item name="android:ellipsize">end</item>
+		<item name="android:textSize">@dimen/map_results_ribbon_text_size</item>
+	</style>
+
+	<style name="map_results_ribbon_item_subtext" parent="@style/map_results_ribbon_item_text">
+		<item name="android:layout_marginBottom">0dp</item>
+		<item name="android:textSize">@dimen/map_results_ribbon_sub_text_size</item>
+		<item name="android:textColor">@color/map_results_ribbon_sub_text_color</item>
+	</style>
+
+	<!-- Feature list item bar -->
+	<style name="feature_list_item_title_text" parent="@style/single_line_text">
+		<item name="android:layout_centerVertical">true</item>
+		<item name="android:paddingLeft">@dimen/feature_list_item_textview_padding_left</item>
+		<item name="android:paddingTop">@dimen/feature_list_item_textview_padding_top</item>
+		<item name="android:paddingRight">@dimen/feature_list_item_textview_padding_right</item>
+		<item name="android:paddingBottom">@dimen/feature_list_item_textview_padding_bottom</item>
+		<item name="android:textAppearance">?android:attr/textAppearanceMedium</item>
+	</style>
+
+	<style name="feature_list_item_description_text">
+		<item name="android:layout_centerVertical">true</item>
+		<item name="android:gravity">center_vertical</item>
+		<item name="android:ellipsize">end</item>
+		<item name="android:maxLines">2</item>
+		<item name="android:paddingLeft">@dimen/feature_list_item_textview_padding_left</item>
+		<item name="android:paddingTop">@dimen/feature_list_item_textview_padding_top</item>
+		<item name="android:paddingRight">@dimen/feature_list_item_textview_padding_right</item>
+		<item name="android:paddingBottom">@dimen/feature_list_item_textview_padding_bottom</item>
+		<item name="android:textAppearance">?android:attr/textAppearanceSmall</item>
+	</style>
+
+	<!-- Route direction dropdown -->
+	<style name="route_direction_dropdown_text">
+		<item name="android:singleLine">false</item>
+		<item name="android:maxLines">2</item>
+		<item name="android:paddingLeft">@dimen/route_direction_dropdown_text_textview_horizontel_padding</item>
+		<item name="android:paddingTop">@dimen/route_direction_dropdown_text_textview_vertical_padding</item>
+		<item name="android:paddingRight">@dimen/route_direction_dropdown_text_textview_horizontel_padding</item>
+		<item name="android:paddingBottom">@dimen/route_direction_dropdown_text_textview_vertical_padding</item>
+		<item name="android:textAppearance">?android:attr/textAppearanceMedium</item>
+	</style>
+
+	<!-- Content controller -->
+	<style name="map_layers_item_icon_imageview">
+		<item name="android:padding">@dimen/map_layers_item_icon_imageview_padding</item>
+	</style>
+
+	<style name="map_layers_item_text" parent="@style/single_line_text">
+		<item name="android:paddingLeft">@dimen/map_layers_item_name_textview_padding_left</item>
+		<item name="android:paddingTop">@dimen/map_layers_item_name_textview_padding_top</item>
+		<item name="android:paddingRight">@dimen/map_layers_item_name_textview_padding_right</item>
+		<item name="android:paddingBottom">@dimen/map_layers_item_name_textview_padding_bottom</item>
+		<item name="android:textSize">@dimen/map_layers_item_name_textview_text_size</item>
+	</style>
+
+	<style name="map_layers_item_visibility_checkbox">
+		<item name="android:focusable">false</item>
+		<item name="android:padding">@dimen/map_layers_item_visibility_checkbox_padding</item>
+	</style>
+
+	<!-- Generic styles -->
+	<style name="indeterminate_progressbar">
+		<item name="android:layout_centerInParent">true</item>
+		<item name="android:indeterminate">true</item>
+		<item name="android:layout_margin">@dimen/basemap_grid_item_progressbar_margin</item>
+	</style>
+
+	<style name="single_line_text">
+		<item name="android:ellipsize">end</item>
+		<item name="android:gravity">center_vertical</item>
+		<item name="android:singleLine">true</item>
+		<item name="android:maxLines">1</item>
+		<item name="android:textColor">@android:color/black</item>
+	</style>
+
+	<style name="navigation_view_text" parent="shadow_text">
+		<item name="android:textColor">@android:color/white</item>
+		<item name="android:paddingRight">10dp</item>
+	</style>
+
+	<style name="shadow_text">
+		<item name="android:shadowColor">@android:color/black</item>
+		<item name="android:shadowDx">1</item>
+		<item name="android:shadowDy">1</item>
+		<item name="android:shadowRadius">2</item>
+	</style>
+
+	<style name="settings_info_content_text">
+		<item name="android:textSize">@dimen/settings_info_content_text_size</item>
+		<item name="android:paddingTop">@dimen/basemap_info_content_textview_padding_top</item>
+		<item name="android:paddingBottom">@dimen/basemap_info_content_textview_padding_bottom</item>
+	</style>
+
+	<style name="settings_label_text">
+		<item name="android:ellipsize">end</item>
+		<item name="android:maxLines">2</item>
+		<item name="android:textStyle">bold</item>
+		<item name="android:textSize">@dimen/settings_header_text_size</item>
+	</style>
+
+	<style name="settings_title_text">
+		<item name="android:ellipsize">end</item>
+		<item name="android:maxLines">2</item>
+		<item name="android:textSize">@dimen/settings_title_text_size</item>
+	</style>
+
+	<style name="settings_value_text">
+		<item name="android:textSize">@dimen/basemap_info_content_textview_text_size</item>
+		<item name="android:textColor">#FF666666</item>
+	</style>
+
+</resources>

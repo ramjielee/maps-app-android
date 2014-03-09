@@ -4,4 +4,283 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
 
+    <!-- All the rest from Collector -->
+
+
+    <!-- Browse card -->
+    <dimen name="portal_item_bottom">2dp</dimen>
+    <dimen name="map_details_radius">2dp</dimen>
+
+    <!-- Portal item -->
+    <dimen name="portal_item_thumbnail_width">125dp</dimen>
+    <dimen name="portal_item_thumbnail_height">83dp</dimen>
+    <dimen name="portal_item_progressbar_margin">10dp</dimen>
+    <dimen name="portal_item_title_text_size">15sp</dimen>
+    <dimen name="portal_item_title_padding_top">1dp</dimen>
+    <dimen name="portal_item_title_padding_bottom">2dp</dimen>
+    <dimen name="portal_item_title_padding_left">0dp</dimen>
+    <dimen name="portal_item_title_padding_right">0dp</dimen>
+    <dimen name="portal_item_sub_text_size">12sp</dimen>
+    <dimen name="portal_item_sub_text_padding_top">1dp</dimen>
+    <dimen name="portal_item_sub_text_padding_bottom">1dp</dimen>
+    <dimen name="portal_item_sub_text_padding_right">0dp</dimen>
+    <dimen name="portal_item_sub_text_padding_left">0dp</dimen>
+
+    <!-- Dialog header -->
+    <dimen name="dialog_header_layout_height">58dp</dimen>
+    <dimen name="dialog_header_title_textview_padding">5dp</dimen>
+    <dimen name="dialog_header_title_text_size">20sp</dimen>
+
+    <!-- Card layout -->
+    <dimen name="card_layout_outer_padding">8dp</dimen>
+    <dimen name="card_layout_inner_padding">6dp</dimen>
+
+    <!-- Misc -->
+    <dimen name="mapview_button_stroke_width">1dip</dimen>
+    <dimen name="separator_view_height">1dp</dimen>
+    <dimen name="separator_view_thick_height">2dp</dimen>
+    <dimen name="root_layout_padding">4dp</dimen>
+    <dimen name="separator_view_layout_margin_horizontal">3dp</dimen>
+
+    <!-- zoom to full screen button -->
+    <dimen name="fullscreen_button_layout_width">35dip</dimen>
+    <dimen name="fullscreen_button_layout_height">35dip</dimen>
+    <dimen name="fullscreen_button_layout_margin_top">5dip</dimen>
+    <dimen name="fullscreen_button_layout_margin_right">5dip</dimen>
+    <dimen name="widget_list_text_size">17sp</dimen>
+    <dimen name="widget_dropdown_spinner_item_icon_imageview_padding">11dp</dimen>
+    <dimen name="widget_dropdown_spinner_item_name_textview_padding">11dp</dimen>
+    <dimen name="list_item_text_size">18sp</dimen>
+    <dimen name="list_item_desc_text_size">14sp</dimen>
+
+    <!-- Widget action bar like GUI -->
+    <dimen name="widget_bar_height">42dp</dimen>
+    <dimen name="widget_bar_item_height">@dimen/widget_bar_height</dimen>
+    <dimen name="widget_bar_item_width">@dimen/widget_bar_item_height</dimen>
+    <dimen name="widget_bar_button_layout_margin">1dp</dimen>
+    <dimen name="widget_bar_feature_action_item_textview_padding">15dp</dimen>
+    <dimen name="widget_bar_title_textview_padding_left">5dp</dimen>
+    <dimen name="widget_bar_title_textview_padding_right">3dp</dimen>
+    <dimen name="widget_bar_title_textview_text_size">24sp</dimen>
+    <dimen name="widget_bar_button_vertical_padding">1dp</dimen>
+    <dimen name="widget_bar_button_horizontal_padding">3dp</dimen>
+
+    <!-- Map result ribbon -->
+    <dimen name="map_results_ribbon_height">70dp</dimen>
+    <dimen name="map_results_ribbon_text_layout_margin_right">5dp</dimen>
+    <dimen name="map_results_ribbon_text_size">16sp</dimen>
+    <dimen name="map_results_ribbon_sub_text_size">14sp</dimen>
+    <dimen name="map_results_ribbon_header_width">58dp</dimen>
+    <dimen name="map_results_ribbon_header_height">48dp</dimen>
+    <dimen name="map_results_ribbon_separator_margin">5dp</dimen>
+    <dimen name="map_results_ribbon_button_size">@dimen/map_results_ribbon_header_height</dimen>
+    <dimen name="map_results_ribbon_viewpager_page_margin">-20dp</dimen>
+    <dimen name="map_results_ribbon_item_cell_separator_width">15dp</dimen>
+    <dimen name="map_results_ribbon_picture_size">50dp</dimen>
+    <dimen name="map_results_ribbon_picture_margin">4dp</dimen>
+    <dimen name="map_results_ribbon_item_text_horizontal_margin">5dp</dimen>
+    <dimen name="map_results_ribbon_item_subtext_margin_bottom">3dp</dimen>
+    <dimen name="map_results_ribbon_action_item_textview_padding">10dp</dimen>
+    <dimen name="route_direction_dropdown_text_textview_horizontel_padding">5dp</dimen>
+    <dimen name="route_direction_dropdown_text_textview_vertical_padding">12dp</dimen>
+    <dimen name="route_overview_text_size">17sp</dimen>
+    <dimen name="route_overview_layout_margin">8dp</dimen>
+
+    <!-- First start dialog -->
+    <dimen name="first_start_dialog_content_text_size">16sp</dimen>
+    <dimen name="first_start_dialog_content_padding">8dp</dimen>
+
+    <!-- Configurations -->
+    <dimen name="config_small_detail_text_size">10sp</dimen>
+    <dimen name="config_detail_text_size">12sp</dimen>
+    <dimen name="config_title_text_size">14sp</dimen>
+    <dimen name="configuration_panel_margin">8dp</dimen>
+    <dimen name="configuration_thumbnail_current_item_size">2dp</dimen>
+    <dimen name="basemap_title_text_size">16sp</dimen>
+    <dimen name="basemap_detail_text_size">14sp</dimen>
+    <dimen name="basemap_small_detail_text_size">12sp</dimen>
+    <dimen name="basemap_switch_text_size">22sp</dimen>
+
+    <!-- Widget and panel -->
+    <dimen name="panel_padding_bottom">8dp</dimen>
+    <dimen name="map_layout_margin">8dp</dimen>
+    <dimen name="map_layout_margin_bottom">16dp</dimen>
+    <dimen name="widget_margin">4dp</dimen>
+    <dimen name="dashboard_margin">4dp</dimen>
+    <dimen name="widgets_myviewpager_margin">@dimen/dashboard_margin</dimen>
+
+    <!-- Basemap fragment -->
+    <dimen name="basemap_root_layout_padding">8dp</dimen>
+    <dimen name="basemap_gridview_horizontal_spacing">8dp</dimen>
+    <dimen name="basemap_gridview_vertical_spacing">8dp</dimen>
+
+    <!-- Basemap grid item -->
+    <dimen name="basemap_grid_item_overlay_height">25dp</dimen>
+    <dimen name="basemap_grid_item_title_text_size">13sp</dimen>
+    <dimen name="basemap_grid_item_status_text_size">12sp</dimen>
+    <dimen name="basemap_grid_item_progressbar_margin">10dp</dimen>
+    <dimen name="basemap_grid_item_info_imageview_padding_left">1dp</dimen>
+    <dimen name="basemap_grid_item_info_imageview_padding_right">0dp</dimen>
+    <dimen name="basemap_grid_item_title_padding_left">4dp</dimen>
+    <dimen name="basemap_grid_item_title_vertical_padding">3dp</dimen>
+    <dimen name="basemap_grid_item_title_padding_right">1dp</dimen>
+    <dimen name="basemap_grid_item_status_padding_left">4dp</dimen>
+    <dimen name="basemap_grid_item_status_padding_right">1dp</dimen>
+    <dimen name="basemap_grid_item_status_padding_bottom">2dp</dimen>
+
+    <!-- Basemap info dialog -->
+    <dimen name="basemap_info_root_layout_padding">5dp</dimen>
+    <dimen name="basemap_info_thumbnail_layout_padding_right">2dp</dimen>
+    <dimen name="basemap_info_thumbnail_layout_padding_bottom">7dp</dimen>
+    <dimen name="basemap_info_details_layout_padding_left">5dp</dimen>
+    <dimen name="basemap_info_details_layout_padding_right">2dp</dimen>
+    <dimen name="basemap_info_title_textview_padding_top">1dp</dimen>
+    <dimen name="basemap_info_title_textview_padding_bottom">1dp</dimen>
+    <dimen name="basemap_info_modified_and_owner_textview_padding_top">1dp</dimen>
+    <dimen name="basemap_info_modified_and_owner_textview_padding_bottom">1dp</dimen>
+    <dimen name="basemap_info_description_layout_padding">1dp</dimen>
+    <dimen name="basemap_info_details_layout_padding">2dp</dimen>
+    <dimen name="basemap_info_header_text_padding_bottom">3dp</dimen>
+    <dimen name="basemap_info_detail_text_padding_left">1dp</dimen>
+    <dimen name="basemap_info_detail_text_padding_top">2dp</dimen>
+    <dimen name="basemap_info_detail_text_padding_right">5dp</dimen>
+    <dimen name="basemap_info_detail_text_padding_bottom">1dp</dimen>
+    <dimen name="basemap_info_content_textview_padding_top">5dp</dimen>
+    <dimen name="basemap_info_content_textview_padding_bottom">15dp</dimen>
+    <dimen name="basemap_info_content_textview_text_size">14sp</dimen>
+    <dimen name="basemap_info_webmap_extent_layout_padding_top">5dp</dimen>
+    <dimen name="basemap_info_webmap_extent_layout_padding_bottom">3dp</dimen>
+
+    <!-- Map info dialog -->
+    <dimen name="map_title_text_size">16sp</dimen>
+    <dimen name="map_detail_text_size">14sp</dimen>
+    <dimen name="map_small_detail_text_size">12sp</dimen>
+    <dimen name="map_switch_text_size">22sp</dimen>
+    <dimen name="map_info_root_layout_padding">4dp</dimen>
+    <dimen name="map_info_thumbnail_padding_right">2dp</dimen>
+    <dimen name="map_info_thumbnail_padding_bottom">7dp</dimen>
+    <dimen name="map_info_details_layout_padding_left">5dp</dimen>
+    <dimen name="map_info_details_layout_padding_right">2dp</dimen>
+    <dimen name="map_info_title_textview_padding_top">1dp</dimen>
+    <dimen name="map_info_title_textview_padding_bottom">1dp</dimen>
+    <dimen name="map_info_modified_and_owner_textview_padding_top">1dp</dimen>
+    <dimen name="map_info_modified_and_owner_textview_padding_bottom">1dp</dimen>
+    <dimen name="map_info_description_layout_padding">1dp</dimen>
+    <dimen name="map_info_details_layout_padding">2dp</dimen>
+    <dimen name="map_info_header_text_padding_bottom">3dp</dimen>
+    <dimen name="map_info_detail_text_padding_left">1dp</dimen>
+    <dimen name="map_info_detail_text_padding_top">2dp</dimen>
+    <dimen name="map_info_detail_text_padding_right">5dp</dimen>
+    <dimen name="map_info_detail_text_padding_bottom">1dp</dimen>
+    <dimen name="map_info_content_textview_padding_top">5dp</dimen>
+    <dimen name="map_info_content_textview_padding_bottom">15dp</dimen>
+    <dimen name="map_info_content_textview_text_size">14sp</dimen>
+    <dimen name="map_info_webmap_extent_layout_padding_top">5dp</dimen>
+    <dimen name="map_info_webmap_extent_layout_padding_bottom">3dp</dimen>
+
+    <!-- Bookmark -->
+    <dimen name="bookmark_tabwidget_height">55dp</dimen>
+    <dimen name="bookmark_tabwidget_unselected_tab_height">2dp</dimen>
+    <dimen name="bookmark_tabwidget_selected_tab_height">5dp</dimen>
+    <dimen name="bookmark_list_item_label_textview_margin">1dp</dimen>
+    <dimen name="bookmark_list_item_label_textview_padding_left">15dp</dimen>
+    <dimen name="bookmark_list_item_label_textview_padding_top">10dp</dimen>
+    <dimen name="bookmark_list_item_label_textview_padding_right">5dp</dimen>
+    <dimen name="bookmark_list_item_label_textview_padding_bottom">10dp</dimen>
+    <dimen name="bookmark_list_header_text_size">16sp</dimen>
+    <dimen name="bookmark_list_header_padding">6dp</dimen>
+    <dimen name="bookmark_list_divider_margin">1dp</dimen>
+    <dimen name="bookmark_list_divider_size">1dp</dimen>
+    <dimen name="bookmark_list_item_text_size">18sp</dimen>
+    <dimen name="bookmark_list_item_image_margin">5dp</dimen>
+    <dimen name="bookmark_list_item_label_padding">2dp</dimen>
+
+    <!-- SimplePopupWindow -->
+    <dimen name="simple_popup_window_item_height">48dp</dimen>
+    <dimen name="simple_popup_window_item_min_width">196dp</dimen>
+    <dimen name="simple_popup_window_icon_item_min_width">110dp</dimen>
+    <dimen name="simple_popup_window_item_padding">16dp</dimen>
+    <dimen name="simple_popup_window_item_text_size">18sp</dimen>
+    <dimen name="simple_popup_window_offset">10dp</dimen>
+
+    <!-- Feature list -->
+    <dimen name="widget_bar_holder_layout_margin">3dp</dimen>
+
+    <!-- Feature list item -->
+    <dimen name="feature_list_item_layout_padding_left">1dp</dimen>
+    <dimen name="feature_list_item_layout_padding_top">4dp</dimen>
+    <dimen name="feature_list_item_layout_padding_right">1dp</dimen>
+    <dimen name="feature_list_item_layout_padding_bottom">4dp</dimen>
+    <dimen name="feature_list_item_symbol_imageview_width">48dp</dimen>
+    <dimen name="feature_list_item_symbol_imageview_height">48dp</dimen>
+    <dimen name="feature_list_item_symbol_imageview_padding">2dp</dimen>
+    <dimen name="feature_list_item_textview_padding_left">5dp</dimen>
+    <dimen name="feature_list_item_textview_padding_top">2dp</dimen>
+    <dimen name="feature_list_item_textview_padding_right">2dp</dimen>
+    <dimen name="feature_list_item_textview_padding_bottom">2dp</dimen>
+    <dimen name="feature_list_item_actions_imageview_padding_left">10dp</dimen>
+    <dimen name="feature_list_item_actions_imageview_padding_top">20dp</dimen>
+    <dimen name="feature_list_spinner_dropdown_item_textview_padding">10dp</dimen>
+    <dimen name="find_place_suggestion_icon_imageview_margin">10dp</dimen>
+
+    <!-- Map result ribbon -->
+    <dimen name="map_results_ribbon_done_button_margin_left">5dp</dimen>
+    <dimen name="map_results_ribbon_done_button_margin_right">5dp</dimen>
+    <dimen name="map_results_ribbon_separator_height">1dp</dimen>
+    <dimen name="map_results_ribbon_separator_horizontal_margin">5dp</dimen>
+    <dimen name="map_results_ribbon_separator_vertical_padding">4dp</dimen>
+    <dimen name="map_results_ribbon_viewpager_padding_bottom">5dp</dimen>
+    <dimen name="map_results_ribbon_actions_button_margin_right">5dp</dimen>
+
+    <!-- Measure -->
+    <dimen name="measure_result_item_value_textview_margin_left">5dp</dimen>
+    <dimen name="measure_result_item_value_textview_margin_right">5dp</dimen>
+    <dimen name="measure_result_item_value_textview_padding">15dp</dimen>
+    <dimen name="measure_result_item_value_textview_size">20sp</dimen>
+    <dimen name="measure_result_textview_text_size">20sp</dimen>
+    <dimen name="measure_type_compound_drawable_padding">10dp</dimen>
+
+    <!-- ViewPager indicator -->
+    <dimen name="linepageindicator_padding_top">4dp</dimen>
+    <dimen name="linepageindicator_padding_bottom">8dp</dimen>
+    <dimen name="linepageindicator_line_width">30dp</dimen>
+    <dimen name="linepageindicator_stroke_width">5dp</dimen>
+    <dimen name="tablet_land_linepageindicator_padding">5dp</dimen>
+
+    <!-- Content controller -->
+    <dimen name="map_layers_item_layout_min_height">42dip</dimen>
+    <dimen name="map_layers_item_layout_indentation">15dip</dimen>
+    <dimen name="map_layers_item_layout_padding_left">5dip</dimen>
+    <dimen name="map_layers_item_layout_padding">2dip</dimen>
+    <dimen name="map_layers_item_icon_imageview_padding">1dip</dimen>
+    <dimen name="map_layers_item_visibility_checkbox_padding">2dip</dimen>
+    <dimen name="map_layers_item_name_textview_text_size">14dip</dimen>
+    <dimen name="map_layers_item_name_textview_padding_left">2dip</dimen>
+    <dimen name="map_layers_item_name_textview_padding_top">3dip</dimen>
+    <dimen name="map_layers_item_name_textview_padding_right">2dip</dimen>
+    <dimen name="map_layers_item_name_textview_padding_bottom">0dip</dimen>
+
+    <!-- Portal/Org Account dialog -->
+    <dimen name="account_dialog_item_image_height">48dip</dimen>
+    <dimen name="account_dialog_item_image_width">48dip</dimen>
+    <dimen name="account_dialog_item_text_size">20sp</dimen>
+    <dimen name="account_dialog_item_small_text_size">13sp</dimen>
+
+    <!-- Settings dialog -->
+    <dimen name="settings_info_content_text_size">14sp</dimen>
+    <dimen name="settings_header_text_size">14sp</dimen>
+    <dimen name="settings_title_text_size">15sp</dimen>
+    <dimen name="settings_value_text_size">14sp</dimen>
+    <dimen name="settings_layout_padding">10dp</dimen>
+    <dimen name="settings_padding_top">10dp</dimen>
+    <dimen name="settings_padding_bottom">10dp</dimen>
+    <dimen name="settings_header_padding_bottom">3dp</dimen>
+
+    <!-- Map fragment -->
+    <dimen name="map_padding">0dp</dimen>
+
+    <!-- Callout -->
+    <dimen name="callout_max_width">300dp</dimen>
+    <dimen name="callout_max_height">150dp</dimen>
+
 </resources>

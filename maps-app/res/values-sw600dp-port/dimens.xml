@@ -1,0 +1,7 @@
+<resources>
+
+	<!-- Card layout -->
+	<dimen name="card_layout_outer_padding">10dp</dimen>
+	<dimen name="card_layout_inner_padding">6dp</dimen>
+
+</resources>

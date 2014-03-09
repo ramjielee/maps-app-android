@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Map card -->
+    <item name="map_card_title_max_lines" type="integer">2</item>
+    <item name="map_card_summary_max_lines" type="integer">2</item>
+
+    <!-- Animations -->
+    <item name="panel_animation_duration" type="integer">250</item>
+    <item name="remove_configuration_animation_duration" type="integer">250</item>
+    <item name="pin_animation_duration" type="integer">600</item>
+    <item name="map_result_ribbon_animation_duration" type="integer">150</item>
+    <item name="switch_map_result_animation_out_duration" type="integer">100</item>
+    <item name="switch_map_result_animation_in_duration" type="integer">@integer/switch_map_result_animation_out_duration</item>
+    <item name="short_animation_duration" type="integer">200</item>
+
+    <!-- Basemap -->
+    <item name="basemap_gridview_column_number" type="integer">2</item>
+
+    <!-- Org -->
+    <item name="organization_thumbnail_max_width" type="integer">300</item>
+
+</resources>

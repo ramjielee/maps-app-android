@@ -1,7 +1,6 @@
 package com.esri.android.mapsapp.basemaps;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import android.app.DialogFragment;
 import android.app.ProgressDialog;
@@ -21,10 +20,8 @@ import android.widget.Toast;
 import com.esri.android.mapsapp.R;
 import com.esri.android.mapsapp.basemaps.BasemapsAdapter.BasemapsAdapterClickListener;
 import com.esri.core.portal.Portal;
-import com.esri.core.portal.PortalGroup;
 import com.esri.core.portal.PortalInfo;
 import com.esri.core.portal.PortalItem;
-import com.esri.core.portal.PortalItemType;
 import com.esri.core.portal.PortalQueryParams;
 import com.esri.core.portal.PortalQueryParams.PortalQuerySortOrder;
 import com.esri.core.portal.PortalQueryResultSet;
@@ -71,7 +68,10 @@ public class BasemapsDialogFragment extends DialogFragment implements BasemapsAd
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Holo_Light_DarkActionBar);
+    setStyle(DialogFragment.STYLE_NORMAL, 0);
+
+    // The following makes the dialog full-screen because it gives it a non-dialog theme:
+    //setStyle(DialogFragment.STYLE_NORMAL, android.R.style.Theme_Holo_Light_DarkActionBar);
 
     // Create and initialise the progress dialog
     mProgressDialog = new ProgressDialog(getActivity()) {
@@ -178,61 +178,58 @@ public class BasemapsDialogFragment extends DialogFragment implements BasemapsAd
       String url = "http://www.arcgis.com";
       Portal portal = new Portal(url, null);
 
-      // Fetch portal info from server
+      // Fetch portal info from server TODO: need this??
       PortalInfo portalInfo = portal.fetchPortalInfo();
       if (isCancelled()) {
         return;
       }
 
-      // Get query to determine which basemap gallery group to us and create a PortalQueryParams from it
-      String basemapGalleryGroupQuery = portalInfo.getBasemapGalleryGroupQuery();
-      PortalQueryParams portalQueryParams = new PortalQueryParams(basemapGalleryGroupQuery);
-      portalQueryParams.setCanSearchPublic(true);
+      // Create a PortalQueryParams to query for items in basemap group
+      PortalQueryParams queryParams = new PortalQueryParams();
+      queryParams.setCanSearchPublic(true);
+      queryParams.setSortField("name").setSortOrder(PortalQuerySortOrder.ASCENDING);
+      queryParams.setQuery(createQueryString());
 
-      // Find groups that match the query
-      PortalQueryResultSet<PortalGroup> results = portal.findGroups(portalQueryParams);
+      // Find items that match the query
+      PortalQueryResultSet<PortalItem> queryResultSet = portal.findItems(queryParams);
       if (isCancelled()) {
         return;
       }
 
-      // Check we have found at least one basemap group
-      List<PortalGroup> groupResults = results.getResults();
-      if (groupResults.size() <= 0) {
-        Log.i(TAG, "portal group empty");
-      } else {
-        // Create a PortalQueryParams to query for items in basemap group
-        PortalQueryParams queryParams = new PortalQueryParams();
-        queryParams.setCanSearchPublic(true);
-        queryParams.setLimit(15);
-
-        // Set query to search for WebMaps in only the first group we found
-        String groupID = groupResults.get(0).getGroupId();
-        queryParams.setQuery(PortalItemType.WEBMAP, groupID, null);
-        queryParams.setSortField("name").setSortOrder(PortalQuerySortOrder.ASCENDING);
-
-        // Find items that match the query
-        PortalQueryResultSet<PortalItem> queryResultSet = portal.findItems(queryParams);
+      // Loop through query results
+      for (PortalItem item : queryResultSet.getResults()) {
+        // Fetch item thumbnail from server
+        byte[] data = item.fetchThumbnail();
         if (isCancelled()) {
           return;
         }
-
-        // Loop through query results
-        for (PortalItem item : queryResultSet.getResults()) {
-          // Fetch item thumbnail from server
-          byte[] data = item.fetchThumbnail();
-          if (isCancelled()) {
-            return;
-          }
-          if (data != null) {
-            // Decode thumbnail and add this item to list for display
-            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
-            BasemapItem portalItemData = new BasemapItem(item, bitmap);
-            Log.i(TAG, "Item id = " + item.getTitle());
-            mBasemapItemList.add(portalItemData);
-          }
+        if (data != null) {
+          // Decode thumbnail and add this item to list for display
+          Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
+          BasemapItem portalItemData = new BasemapItem(item, bitmap);
+          Log.i(TAG, "Item id = " + item.getTitle());
+          mBasemapItemList.add(portalItemData);
         }
       }
     }
+
+    String[] mBasemapIds = {
+        "d5e02a0c1f2b4ec399823fdd3c2fdebd", // topo
+        "716b600dbbac433faa4bec9220c76b3a", // imagery with labels
+        "2bc6e99fcb9640f0aa14aebcbcbaccd9", // DeLorme World Basemap
+        "8bf7167d20924cbf8e25e7b11c7c502c"  // streets
+    };
+    private String createQueryString() {
+      StringBuilder str = new StringBuilder();
+      for (int i=0; i < mBasemapIds.length; i++) {
+        str.append("id:").append(mBasemapIds[i]);
+        if ( i < mBasemapIds.length - 1) {
+          str.append(" OR ");
+        }
+      }
+      return str.toString();
+    }
+
   }
 
   /**
