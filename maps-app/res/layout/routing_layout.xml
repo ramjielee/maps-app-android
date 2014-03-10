@@ -7,10 +7,10 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context=".DirectionsDialogFragment" >
+    tools:context=".RoutingDialogFragment" >
 
     <EditText
-        android:id="@+id/myLocation"
+        android:id="@+id/startPoint"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
@@ -28,10 +28,10 @@
         android:inputType="text" />
 
     <Button
-        android:id="@+id/getDirectionsButton"
+        android:id="@+id/getRouteButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/directions_button"
+        android:text="@string/get_route"
         android:layout_marginTop="20dp" />
 
 </LinearLayout>

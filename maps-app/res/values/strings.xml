@@ -7,7 +7,7 @@
     <!-- webmap urls -->
     <string name="rec_webmap_url">http://www.arcgis.com/home/item.html?id=6929c43e567647fb85e261beee7f5774</string>
     <string name="topo_basemap_url">http://www.arcgis.com/home/item.html?id=d5e02a0c1f2b4ec399823fdd3c2fdebd</string>
-    
+
     <!-- recreation webmap itemID -->
     <string name="rec_webmap_id">6929c43e567647fb85e261beee7f5774</string>
 
@@ -22,20 +22,22 @@
 
     <!-- action bar titles -->
     <string name="menu_search">Search</string>
-    <string name="menu_route">Route</string>
+    <string name="menu_route">Routing</string>
     <string name="menu_basemaps">Basemaps</string>
     <string name="action_location">Toggle Location Tracking</string>
-    
+    <string name="action_directions">Driving Directions</string>
+
     <!-- directions button text -->
-    <string name="directions_button">Get Directions</string>
+    <string name="get_route">Get Route</string>
 
     <!-- location search hint -->
     <string name="my_location">My Location</string>
     <string name="need_location_fix">Need a location fix before \'My Location\' can be used</string>
-    
+
     <!-- dialog titles -->
     <string name="title_basemaps_dialog">Select Base Map</string>
-    <string name="title_directions_dialog">Directions</string>
+    <string name="title_routing_dialog">Routing</string>
+    <string name="title_directions_dialog">Driving Directions</string>
     
     <!-- popup menu items -->
     <string name="menu_edit">edit</string>
@@ -53,5 +55,8 @@
     <string name="routingFailed">Routing task failed</string>
     <string name="addressSearchFailed">Address search failed</string>
     <string name="noResultsFound">No results found</string>
-    
+
+    <string name="route_time">Time</string>
+    <string name="route_distance">Distance</string>
+
 </resources>

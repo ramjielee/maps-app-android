@@ -59,9 +59,9 @@ import com.esri.android.mapsapp.R;
 import com.esri.android.mapsapp.basemaps.BasemapsDialogFragment;
 import com.esri.android.mapsapp.basemaps.BasemapsDialogFragment.BasemapsDialogListener;
 import com.esri.android.mapsapp.location.DirectionsDialogFragment;
-import com.esri.android.mapsapp.location.DirectionsDialogFragment.DirectionsDialogListener;
+import com.esri.android.mapsapp.location.RoutingDialogFragment;
+import com.esri.android.mapsapp.location.RoutingDialogFragment.RoutingDialogListener;
 import com.esri.core.geometry.Envelope;
-import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.LinearUnit;
 import com.esri.core.geometry.Point;
@@ -81,6 +81,7 @@ import com.esri.core.tasks.geocode.LocatorGeocodeResult;
 import com.esri.core.tasks.geocode.LocatorReverseGeocodeResult;
 import com.esri.core.tasks.na.NAFeaturesAsFeature;
 import com.esri.core.tasks.na.Route;
+import com.esri.core.tasks.na.RouteDirection;
 import com.esri.core.tasks.na.RouteParameters;
 import com.esri.core.tasks.na.RouteResult;
 import com.esri.core.tasks.na.RouteTask;
@@ -89,7 +90,7 @@ import com.esri.core.tasks.na.StopGraphic;
 /**
  * Entry point into the Maps App.
  */
-public class MapsAppActivity extends Activity implements BasemapsDialogListener, DirectionsDialogListener {
+public class MapsAppActivity extends Activity implements BasemapsDialogListener, RoutingDialogListener {
 
   private static final String TAG = "MapsAppActivity";
 
@@ -107,6 +108,10 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
 
   // graphics layer to show geocode result
   GraphicsLayer mLocationLayer;
+  
+  Point mLocationLayerPoint;
+  
+  String mLocationLayerPointString;
 
   // GPS Location definitions
   Point mLocation = null;
@@ -143,7 +148,11 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
   RouteTask routeTask;
 
   String routeSummary;
+  
+  List<RouteDirection> mRoutingDirections;
 
+  MenuItem mActionItemDirections;
+  
   // graphics layer to show routes
   GraphicsLayer mRouteLayer;
 
@@ -164,6 +173,7 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
     mMapView = new MapView(this, defaultBaseMapURL, "", "");
     mLocationLayer = null;
     mRouteLayer = null;
+    mRoutingDirections = null;
 
     // Complete setup of MapView and set it as the content view
     setMapView(mMapView);
@@ -270,15 +280,24 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
           Point mapPoint = mMapView.toMapPoint(to.getX(), to.getY());
           new ReverseGeocodingAsyncTask().execute(mapPoint);
           mLongPressEvent = null;
-          // remove any previous graphics, callouts and routes
-          mLocationLayer.removeAll();
-          mRouteLayer.removeAll();
+          // remove any previous graphics and routes
+          resetGraphicsLayers();
+          mSearchEditText.setText("");
         }
         return super.onDragPointerUp(from, to);
       }
 
     });
 
+  }
+
+  private void resetGraphicsLayers() {
+    mLocationLayer.removeAll();
+    mRouteLayer.removeAll();
+    mLocationLayerPoint = null;
+    mLocationLayerPointString = null;
+    mRoutingDirections = null;
+    mActionItemDirections.setVisible(false);
   }
 
   private void startLocationTracking() {
@@ -345,6 +364,7 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
     // Get a reference to the EditText widget for the search option
     View searchRef = menu.findItem(R.id.menu_search).getActionView();
     mSearchEditText = (EditText) searchRef.findViewById(R.id.searchText);
+    mActionItemDirections = menu.findItem(R.id.directions);
     return super.onCreateOptionsMenu(menu);
   }
 
@@ -353,11 +373,16 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
 
     switch (item.getItemId()) {
       case R.id.route:
-        // Show DirectionsDialogFragment to get routing start and end points.
-        // This calls back to onGetDirections() to do the routing.
-        DirectionsDialogFragment directionsFrag = new DirectionsDialogFragment();
-        directionsFrag.setDirectionsDialogListener(this);
-        directionsFrag.show(getFragmentManager(), null);
+        // Show RoutingDialogFragment to get routing start and end points.
+        // This calls back to onGetRoute() to do the routing.
+        RoutingDialogFragment routingFrag = new RoutingDialogFragment();
+        routingFrag.setRoutingDialogListener(this);
+        Bundle arguments = new Bundle();
+        if (mLocationLayerPoint != null) {
+          arguments.putString(RoutingDialogFragment.ARG_END_POINT_DEFAULT, mLocationLayerPointString);
+        }
+        routingFrag.setArguments(arguments);
+        routingFrag.show(getFragmentManager(), null);
         return true;
 
       case R.id.basemaps:
@@ -375,6 +400,13 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
         } else {
           startLocationTracking();
         }
+        return true;
+
+      case R.id.directions:
+        // Launch a DirectionsListFragment to display list of directions
+        DirectionsDialogFragment frag = new DirectionsDialogFragment();
+        frag.setRoutingDirections(mRoutingDirections);
+        getFragmentManager().beginTransaction().add(frag, null).commit();
         return true;
 
       default:
@@ -446,9 +478,8 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
     InputMethodManager inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
     inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
 
-    // remove any previous graphics, callouts and routes
-    mLocationLayer.removeAll();
-    mRouteLayer.removeAll();
+    // remove any previous graphics and routes
+    resetGraphicsLayers();
 
     // Obtain address and execute locator task
     String address = mSearchEditText.getText().toString();
@@ -482,10 +513,12 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
 
     // Execute async task to find the address
     new LocatorAsyncTask().execute(findParams);
+    mLocationLayerPointString = address;
+
   }
 
   /**
-   * Called by DirectionsDialogFragment when user presses Get Directions button.
+   * Called by RoutingDialogFragment when user presses Get Route button.
    * 
    * @param startPoint String entered by user to define start point.
    * @param endPoint String entered by user to define end point.
@@ -493,15 +526,14 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
    *         display an explanatory Toast to the user before returning.
    */
   @Override
-  public boolean onGetDirections(String startPoint, String endPoint) {
+  public boolean onGetRoute(String startPoint, String endPoint) {
     if (startPoint.equals(getString(R.string.my_location)) && mLocation == null) {
       Toast.makeText(MapsAppActivity.this, getString(R.string.need_location_fix), Toast.LENGTH_LONG).show();
       return false;
     }
-    // remove any previous graphics and callouts
-    mLocationLayer.removeAll(); // TODO: confirm if this makes sense
-    // remove any previous routes
-    mRouteLayer.removeAll();
+    // remove any previous graphics and routes
+    resetGraphicsLayers();
+    mSearchEditText.setText("");
     // set parameters to geocode address for points
     executeRoutingTask(startPoint, endPoint);
     return true;
@@ -523,7 +555,6 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
     routeParams.add(routeEndParams);
     // run asych route task
     new RouteAsyncTask().execute(routeParams);
-
   }
 
   /*
@@ -577,13 +608,14 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
         geocodeResult = result.get(0);
 
         // get return geometry from geocode result
-        Geometry resultLocGeom = geocodeResult.getLocation();
+        Point resultPoint = geocodeResult.getLocation();
         // create marker symbol to represent location TODO: need offset?
         SimpleMarkerSymbol resultSymbol = new SimpleMarkerSymbol(Color.RED, 16, SimpleMarkerSymbol.STYLE.CROSS);
         // create graphic object for resulting location
-        Graphic resultLocGraphic = new Graphic(resultLocGeom, resultSymbol);
+        Graphic resultLocGraphic = new Graphic(resultPoint, resultSymbol);
         // add graphic to location layer
         mLocationLayer.addGraphic(resultLocGraphic);
+
         // create text symbol for return address
         String address = geocodeResult.getAddress();
         TextSymbol resultAddress = new TextSymbol(20, address, Color.BLACK);
@@ -591,9 +623,11 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
         resultAddress.setOffsetX(-4 * address.length()); // TODO: improve this rough calculation?
         resultAddress.setOffsetY(10);
         // create a graphic object for address text
-        Graphic resultText = new Graphic(resultLocGeom, resultAddress);
+        Graphic resultText = new Graphic(resultPoint, resultAddress);
         // add address text graphic to location graphics layer
         mLocationLayer.addGraphic(resultText);
+        
+        mLocationLayerPoint = resultPoint;
 
         // Zoom map to geocode result location
         mMapView.zoomToResolution(geocodeResult.getLocation(), 2);
@@ -608,6 +642,9 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
    */
   private class RouteAsyncTask extends AsyncTask<List<LocatorFindParameters>, Void, RouteResult> {
     private Exception mException;
+
+    public RouteAsyncTask() {
+    }
 
     @Override
     protected void onPreExecute() {
@@ -717,14 +754,18 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
 
       // Create point graphic to mark end of route
       int endPointIndex = ((Polyline) routeGraphic.getGeometry()).getPointCount() - 1;
-      Point point = ((Polyline) routeGraphic.getGeometry()).getPoint(endPointIndex);
-      Graphic endGraphic = createMarkerGraphic(point);
+      Point endPoint = ((Polyline) routeGraphic.getGeometry()).getPoint(endPointIndex);
+      Graphic endGraphic = createMarkerGraphic(endPoint);
 
       // route and end point graphics to route layer
       mRouteLayer.addGraphics(new Graphic[] { routeGraphic, endGraphic });
-
+      
       // Zoom to the extent of the entire route with a padding
       mMapView.setExtent(route.getEnvelope(), 100);
+      
+      // Save routing directions so user can display them later
+      mRoutingDirections = route.getRoutingDirections();
+      mActionItemDirections.setVisible(true);
     }
 
   }
@@ -757,6 +798,7 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
         // Our input and output spatial reference will be the same as the map
         SpatialReference mapRef = mMapView.getSpatialReference();
         result = locator.reverseGeocode(mPoint, 50.0, mapRef, mapRef);
+        mLocationLayerPoint = mPoint;
       } catch (Exception e) {
         mException = e;
       }
@@ -775,8 +817,6 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
         return;
       }
 
-      String resultAddress;
-
       // Construct a nicely formatted address from the results
       StringBuilder address = new StringBuilder();
       if (result != null && result.getAddressFields() != null) {
@@ -784,14 +824,27 @@ public class MapsAppActivity extends Activity implements BasemapsDialogListener,
         address.append(String.format("%s\n%s, %s %s", addressFields.get("Address"), addressFields.get("City"),
             addressFields.get("Region"), addressFields.get("Postal")));
 
-        // Show the results of the reverse geocoding in a toast.
-        resultAddress = address.toString();
-        Toast.makeText(MapsAppActivity.this, resultAddress, Toast.LENGTH_LONG).show();
-
         // Draw marker on map.
         // create marker symbol to represent location TODO: need offset?
         SimpleMarkerSymbol symbol = new SimpleMarkerSymbol(Color.RED, 16, SimpleMarkerSymbol.STYLE.CROSS);
         mLocationLayer.addGraphic(new Graphic(mPoint, symbol));
+
+        // Address string is saved for use in routing
+        mLocationLayerPointString = address.toString();
+
+        // Show the results of the reverse geocoding in a toast.
+        //Toast.makeText(MapsAppActivity.this, mLocationLayerPointString, Toast.LENGTH_LONG).show();
+
+        // create text symbol for result address
+        TextSymbol textSymbol = new TextSymbol(20, address.toString(), Color.BLACK);
+        // create offset for text
+        textSymbol.setOffsetX(-3 * address.length()); // TODO: improve this rough calculation?
+        textSymbol.setOffsetY(10);
+        // create a graphic object for address text
+        Graphic resultText = new Graphic(mPoint, textSymbol);
+        // add address text graphic to location graphics layer
+        mLocationLayer.addGraphic(resultText);
+        mMapView.centerAt(mPoint, true);
       }
     }
   }

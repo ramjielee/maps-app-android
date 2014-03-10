@@ -22,5 +22,11 @@
         android:icon="@android:drawable/ic_menu_mylocation"
         android:showAsAction="ifRoom"
         android:title="@string/action_location"/>
-
+    <item
+        android:id="@+id/directions"
+        android:icon="@drawable/ic_routing_take_center_fork_dark"
+        android:showAsAction="ifRoom"
+        android:visible="false"
+        android:title="@string/action_directions"/>
+    
 </menu>
